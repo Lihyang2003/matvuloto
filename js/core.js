@@ -60,6 +60,12 @@ const CHARS = [
   ['khi','Khỉ','Lém lỉnh, nhanh trí – nhảy cao nhất đội.'],['ga','Gà','Siêng năng, dậy sớm – gáy là có số.'],
   ['cho','Chó','Trung thành, thính mũi – đánh hơi số hay.'],['heo','Heo','Phúc hậu, tròn trịa – ăn no lụm nhiều.']];
 const charImg = k => `assets/chars/${k}.webp`;
+const charNS = k => `assets/chars_ns/${k}.webp`;
+/* place a character so its feet (measured shadow centre) land exactly on (cx, cy); h = sprite height */
+function charOn(k, cx, cy, h, { cls = '', style = '', shadow = true } = {}) { const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const w = h * asp;
+  return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw * w / 2).toFixed(1)}px;top:${(cy - h * .04).toFixed(1)}px;width:${(sw * w).toFixed(1)}px;height:${(h * .08).toFixed(1)}px"></div>` : ''}<img src="${charNS(k)}" class="abs ${cls}" style="left:${(cx - ax * w).toFixed(1)}px;top:${(cy - ay * h).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * 100).toFixed(1)}% ${(ay * 100).toFixed(1)}%;${style}">`; }
+/* podium centred on cx, top edge at y; returns html; top-surface centre is y + 50*scale */
+const podiumAt = (green, cx, y, s = 1, extra = '') => podium(green, `left:${cx - 160 * s}px;top:${y}px;transform:scale(${s});transform-origin:0 0;${extra}`);
 const IMG = k => `assets/img/${k}`;
 const ITEMS = { ao:['Áo dài Tết','ao_dai_tet.webp',0], nonla:['Nón lá','non_la.webp',500], khan:['Khăn rằn','khan_ran.webp',800], kinh:['Kính mật vụ','kinh_mat_vu.webp',1200] };
 
@@ -88,6 +94,7 @@ function tone(f, t, d, vol = .12, type = 'triangle', dest) { const a = ac(); if 
 function beep(type = 'click') {
   if (!S.sound) return; const a = ac(); if (!a) return; let t = a.currentTime;
   if (type === 'whoosh') { const o = tone(300, t, .32, .07, 'sawtooth'); o && o.frequency.exponentialRampToValueAtTime(1400, t + .3); return; }
+  if (type === 'step') { tone(130 + Math.random() * 40, t, .07, .05, 'sine'); return; }
   if (type === 'drop') { const o = tone(900, t, .25, .08, 'sine'); o && o.frequency.exponentialRampToValueAtTime(260, t + .24); return; }
   const seq = { click: [[700, .06]], pick: [[880, .07], [1320, .1]], bad: [[230, .14], [180, .16]], call: [[523, .08], [784, .12]], pop: [[1000, .05]],
     win: [[523, .1], [659, .1], [784, .1], [1047, .3]], coin: [[1318, .05], [1760, .08]], jump: [[392, .06], [587, .08]], kinh: [[523, .08], [659, .08], [784, .08], [1047, .12], [1318, .35]], tick: [[1500, .03]] }[type] || [[600, .05]];

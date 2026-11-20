@@ -19,7 +19,7 @@ SCREENS.onboard = {
   mount(el) { wireCommon(el); on(el, '[data-guest]', () => { S.logged = true; S.guest = true; S.name = 'Khách ' + (1000 + Math.floor(Math.random() * 9000)); save(); go('lobby'); }); }
 };
 
-const field = (label, ph, icon, type = 'text', val = '') => `<div class="field"><label>${label}</label><div class="box">${ic(icon, 'var(--brown5)')}<input type="${type}" placeholder="${ph}" value="${val}"></div></div>`;
+const field = (label, ph, icon, type = 'text', val = '') => `<div class="field"><label>${label}</label><div class="fbox">${ic(icon, 'var(--brown5)')}<input type="${type}" placeholder="${ph}" value="${val}"></div></div>`;
 const checkbox = (label, onv = false) => `<div class="check ${onv ? 'on' : ''}" data-check><div class="bx">${ic('check', 'var(--brown)')}</div><span>${label}</span></div>`;
 
 SCREENS.login = {
@@ -81,9 +81,9 @@ SCREENS.lobby = {
     <div class="abs row" style="right:60px;top:48px;gap:18px">${coinPill('data-go="shopxu" style="cursor:pointer"')}
       <div class="iconbtn" data-go="mail">${ic('mail', 'var(--brown)')}${unreadMails() ? `<span class="dot-badge">${unreadMails()}</span>` : ''}</div>
       <div class="iconbtn" data-help>${ic('help', 'var(--brown)')}</div><div class="iconbtn" data-go="settings">${ic('settings', 'var(--brown)')}</div></div>
-    <div class="abs" style="left:130px;top:230px;width:620px;height:700px;cursor:pointer" data-go="character">${podium(false, 'left:85px;top:420px;transform:scale(1.4);transform-origin:top center')}
-      <img src="${charImg(S.char)}" class="abs breath" style="left:110px;top:60px;width:400px;height:400px;object-fit:contain">
-      <div class="abs" style="left:0;right:0;top:640px;display:flex;justify-content:center"><span class="tag blue" style="font-size:22px;padding:8px 22px 10px;box-shadow:var(--hard-s)">${ic('refresh', '#fff', 26)} ĐỔI NHÂN VẬT</span></div></div>
+    <div class="abs" style="left:130px;top:230px;width:620px;height:700px;cursor:pointer" data-go="character">${podiumAt(false, 310, 420, 1.4)}
+      ${charOn(S.char, 310, 492, 380, { cls: 'breath' })}
+      <div class="abs" style="left:0;right:0;top:650px;display:flex;justify-content:center"><span class="tag blue" style="font-size:22px;padding:8px 22px 10px;box-shadow:var(--hard-s)">${ic('refresh', '#fff', 26)} ĐỔI NHÂN VẬT</span></div></div>
     <div class="abs col" style="left:1030px;top:250px;width:720px;gap:30px">${btn('CHƠI NHANH', { icon: 'zap', attrs: 'data-go="find"' })}${btn('TẠO PHÒNG', { color: 'blue', icon: 'plus', attrs: 'data-go="create"' })}${btn('VÀO PHÒNG', { color: 'yellow', icon: 'hash', attrs: 'data-go="join"' })}
       <div class="row wiggle-slow" style="align-self:center;gap:16px;background:var(--red);border:5px solid var(--brown);border-radius:24px;padding:12px 26px 14px 16px;box-shadow:var(--hard-s);cursor:pointer" data-go="quests"><img src="${IMG('coin_chest.webp')}" width="80"><div class="col" style="color:var(--cream)"><b style="font-size:28px;font-weight:900">SỰ KIỆN TẾT</b><span style="font-weight:700;font-size:20px">Lụm 50 số – nhận Rương xu!</span></div></div></div>
     <div class="abs row panel" style="right:70px;bottom:60px;gap:22px;padding:18px 28px 20px;border-radius:36px">
@@ -118,7 +118,7 @@ SCREENS.character = {
         <div style="position:relative;height:100%;border-radius:14px;background:${k === sel ? 'var(--or5)' : 'var(--cream)'} url(${charImg(k)}) right 6px top 6px/118px no-repeat"><span class="tag ${k === sel ? '' : 'cream'}" style="position:absolute;left:10px;top:10px;font-size:22px;${k === sel ? 'background:var(--brown);color:var(--cream)' : ''}">${n}</span></div></div>`).join('')}</div></div>
     <div class="abs panel" style="left:1000px;top:232px;width:810px;height:452px;padding:24px"><div style="position:relative;height:100%;border-radius:26px;overflow:hidden;background:radial-gradient(circle at 45% 40%,#FFEEC7,#F5C77D)">
       <span class="abs" style="left:400px;top:34px;font-weight:800;font-size:22px;letter-spacing:.12em;color:var(--brown5)">PREVIEW</span>
-      ${podium(false, 'left:50px;top:250px')}<img src="${charImg(sel)}" class="abs breath char-sel-pop" style="left:60px;top:30px;width:300px;height:300px;object-fit:contain">
+      ${podiumAt(false, 210, 250)}${charOn(sel, 210, 302, 285, { cls: 'breath char-sel-pop' })}
       ${S.wearing && S.wearing !== 'ao' ? `<img src="${IMG(ITEMS[S.wearing][1])}" class="abs" style="left:${S.wearing === 'kinh' ? 150 : S.wearing === 'nonla' ? 110 : 140}px;top:${S.wearing === 'kinh' ? 100 : S.wearing === 'nonla' ? -10 : 170}px;width:${S.wearing === 'nonla' ? 200 : 130}px">` : ''}
       <div class="abs col" style="left:400px;top:70px;width:340px;gap:14px"><span class="tag blue" style="align-self:flex-start">Con giáp #${idx + 1}</span><div style="font-weight:900;font-size:84px;line-height:1">${c[1].toUpperCase()}</div>
         <div style="font-weight:600;font-size:26px">${c[2]}</div><div class="row" style="gap:10px"><span class="tag cream" style="font-size:18px">Tốc độ ★★★</span><span class="tag cream" style="font-size:18px">May mắn ★★</span></div></div></div></div>

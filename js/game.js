@@ -2,7 +2,7 @@
 const WORLD = { w: 5120, h: 6134 };
 const G = {};
 SCREENS.game = {
-  html: () => `<div class="abs" style="inset:0;background:#c97a5d;overflow:hidden" id="view"><div id="world"><div class="map"></div><div id="balls"></div><div id="player"><div class="sh"></div><div class="sp" style="background-image:url(${charImg(S.char)})"></div><div class="nm">Bạn</div></div></div></div>
+  html: () => `<div class="abs" style="inset:0;background:#c97a5d;overflow:hidden" id="view"><div id="world"><div class="map"></div><div id="balls"></div></div></div>
     <div class="hud">
       <div class="abs calledboard" data-board style="left:24px;top:30px"><div class="lbl">SỐ<br>ĐÃ<br>GỌI</div><div id="called" class="row" style="gap:12px;min-width:430px;min-height:96px"></div></div>
       <div class="abs ticket" data-board style="left:24px;top:190px;cursor:pointer"><div class="col" style="font-weight:900;font-size:18px;line-height:1.15;color:var(--brown5)">VÉ<br>CỦA<br>BẠN</div><div id="ticket" class="row" style="gap:10px"></div></div>
@@ -29,10 +29,16 @@ function startGame(el) {
   // calling order: ticket numbers interleaved early so a round lasts ~1.5–2 min
   const order = []; const slots = [1, 4, 8, 12, 17]; let ti = 0, ri = 0;
   for (let i = 0; i < 60; i++) order.push(slots.includes(i) ? ticket[ti++] : rest[ri++]);
-  Object.assign(G, { el, running: true, t: 165, px: 3644, py: 2304, cx: 0, cy: 0, dustT: 0, vx: 0, vy: 0, face: 1, jump: 0, keys: {}, joy: [0, 0], ticket, got: [], called: [], order, oi: 0, nextCall: 1.2,
+  Object.assign(G, { el, running: true, t: 165, cx: 0, cy: 0, camInit: false, keys: {}, joy: [0, 0], ticket, got: [], called: [], order, oi: 0, nextCall: 1.2,
     balls: [], extras: [], opp: 0, oppNext: rnd(24, 34), last: performance.now(), done: false, jumps: 0 });
   const $ = s => el.querySelector(s);
-  G.world = $('#world'); G.player = $('#player'); G.sp = G.player.querySelector('.sp'); G.ballsEl = $('#balls'); G.mm = $('#mm');
+  G.world = $('#world'); G.ballsEl = $('#balls'); G.mm = $('#mm');
+  // entities: you + 7 bots (Goose-Goose-Duck style crowd)
+  G.me = makeEnt(S.char, 'Bạn', 'me', 3644, 2304);
+  Object.defineProperty(G, 'px', { configurable: true, get: () => G.me.x, set: v => { G.me.x = v; } });
+  Object.defineProperty(G, 'py', { configurable: true, get: () => G.me.y, set: v => { G.me.y = v; } });
+  const pool = [['chuot', 'Chuột chít', 'red'], ['rong', 'Rồng vàng', 'red'], ['khi', 'Khỉ lém', 'red'], ['ho', 'Hổ con', 'green'], ['meo', 'Mèo mướp', 'green'], ['cho', 'Cún nhà', 'green'], ['heo', 'Heo ủn ỉn', 'green'], ['ga', 'Gà gáy', 'red']].filter(p => p[0] !== S.char).slice(0, 7);
+  G.bots = pool.map(([k, n, t], i) => { const e = makeEnt(k, n, t, 3644 + Math.cos(i * .9) * (420 + i * 60), 2304 + Math.sin(i * .9) * (300 + i * 40)); e.speedK = .5 + Math.random() * .3; e.wait = Math.random() * 1.5; return e; });
   renderTicket(); renderCalled();
   // minimap scale
   G.mmS = 270 / 1700; G.mm.style.width = WORLD.w * G.mmS + 'px'; G.mm.style.height = WORLD.h * G.mmS + 'px';
@@ -61,23 +67,19 @@ function loop(now) {
   G.t -= dt; if (G.t <= 0 && !G.done) return endGame(false, 'HẾT GIỜ!');
   G.nextCall -= dt; if (G.nextCall <= 0) { G.nextCall = 3.4; callNext(); }
   G.oppNext -= dt; if (G.oppNext <= 0 && !G.done) { G.opp++; G.oppNext = 22 + Math.random() * 14; const oe = G.el.querySelector('#opp'); oe.textContent = G.opp + '/5'; oe.classList.remove('bump'); void oe.offsetWidth; oe.classList.add('bump'); beep('bad'); if (G.opp >= 4) toast('Đội Xanh sắp KINH rồi – nhanh lên!', 'bad', 'zap'); if (G.opp >= 5) return endGame(false); }
-  // movement
+  // movement (input → smooth velocity → waddle animation)
   let ix = (G.keys['arrowright'] || G.keys['d'] ? 1 : 0) - (G.keys['arrowleft'] || G.keys['a'] ? 1 : 0) + G.joy[0];
   let iy = (G.keys['arrowdown'] || G.keys['s'] ? 1 : 0) - (G.keys['arrowup'] || G.keys['w'] ? 1 : 0) + G.joy[1];
   const l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; }
-  const sp = 820; G.px = Math.max(120, Math.min(WORLD.w - 120, G.px + ix * sp * dt)); G.py = Math.max(560, Math.min(WORLD.h - 60, G.py + iy * sp * dt));
-  G.dustT -= dt; if (l > .2 && G.jump === 0 && G.dustT <= 0) { G.dustT = .11; const d = document.createElement('div'); d.className = 'dust'; d.style.left = (G.px - 17 - ix * 50 + (Math.random() - .5) * 40) + 'px'; d.style.top = (G.py - 14) + 'px'; G.ballsEl.appendChild(d); setTimeout(() => d.remove(), 620); }
-  if (ix < -.1) G.face = -1; else if (ix > .1) G.face = 1;
-  if (G.jump > 0) G.jump = Math.max(0, G.jump - dt);
-  const jy = G.jump > 0 ? -Math.sin((1 - G.jump / .45) * Math.PI) * 120 : 0; const walk = l > .1 ? Math.sin(now / 70) * 6 : 0;
-  G.player.style.left = G.px + 'px'; G.player.style.top = G.py + 'px';
-  G.sp.style.transform = `translateY(${jy + walk}px) scaleX(${G.face})`;
-  G.player.querySelector('.sh').style.transform = `scale(${1 - (-jy) / 300})`;
-  const cx = Math.max(0, Math.min(WORLD.w - 1920, G.px - 960)), cy = Math.max(0, Math.min(WORLD.h - 1080, G.py - 620)); G.cx = cx; G.cy = cy;
-  G.world.style.transform = `translate(${-cx}px,${-cy}px)`;
+  animEnt(G.me, dt, now, ix, iy, 820);
+  for (const e of G.bots) botThink(e, dt, now);
+  // camera: smooth follow with a little look-ahead
+  const tx = Math.max(0, Math.min(WORLD.w - 1920, G.me.x + G.me.vx * .3 - 960)), ty = Math.max(0, Math.min(WORLD.h - 1080, G.me.y + G.me.vy * .3 - 620));
+  if (!G.camInit) { G.cx = tx; G.cy = ty; G.camInit = true; } else { const ck = 1 - Math.exp(-dt * 6); G.cx += (tx - G.cx) * ck; G.cy += (ty - G.cy) * ck; }
+  G.world.style.transform = `translate(${-G.cx.toFixed(1)}px,${-G.cy.toFixed(1)}px)`;
   // minimap
   G.mm.style.left = (135 - G.px * G.mmS) + 'px'; G.mm.style.top = (135 - G.py * G.mmS) + 'px';
-  if (!G._mmT || now - G._mmT > 200) { G._mmT = now; G.mm.innerHTML = G.balls.map(b => `<i style="left:${b.x * G.mmS}px;top:${b.y * G.mmS}px;${b.kind === 'ticket' ? '' : 'background:#fff;width:9px;height:9px;margin:-4px'}"></i>`).join('') + `<i class="me" style="left:${G.px * G.mmS}px;top:${G.py * G.mmS}px"></i>`; }
+  if (!G._mmT || now - G._mmT > 200) { G._mmT = now; G.mm.innerHTML = G.balls.map(b => `<i style="left:${b.x * G.mmS}px;top:${b.y * G.mmS}px;${b.kind === 'ticket' ? '' : 'background:#fff;width:9px;height:9px;margin:-4px'}"></i>`).join('') + G.bots.map(e => `<i class="bot ${e.team}" style="left:${e.x * G.mmS}px;top:${e.y * G.mmS}px"></i>`).join('') + `<i class="me" style="left:${G.px * G.mmS}px;top:${G.py * G.mmS}px"></i>`; }
   // timer text + nearby highlight
   const tt = Math.max(0, Math.ceil(G.t)); const te = G.el.querySelector('#timer'); te.textContent = Math.floor(tt / 60) + ':' + String(tt % 60).padStart(2, '0'); te.classList.toggle('low', tt <= 20);
   const near = nearestBall(); G.el.querySelector('#bPick').classList.toggle('ready', !!near);
@@ -86,7 +88,7 @@ function loop(now) {
 function spawnBall(n, kind) {
   let x, y, t = 0; do { x = 470 + Math.random() * 4180; y = 900 + Math.random() * 4790; t++; const d = Math.hypot(x - G.px, y - G.py); if (d > 650 && d < (kind === 'ticket' ? 2300 : 3200)) break; } while (t < 80);
   const b = { n, kind, x, y, el: document.createElement('div') }; b.el.className = 'wball drop' + (kind === 'ticket' ? '' : ' decoy'); beep('drop'); b.el.style.left = x + 'px'; b.el.style.top = y + 'px';
-  b.el.innerHTML = `${kind === 'ticket' ? '<div class="beam"></div>' : ''}<div class="glow"></div>${ball(n, 'sm')}`; G.ballsEl.appendChild(b.el); G.balls.push(b);
+  b.el.innerHTML = `${kind === 'ticket' ? '<div class="beam"></div>' : ''}<div class="glow"></div>${ball(n, 'sm')}`; b.el.style.zIndex = Math.round(y); G.ballsEl.appendChild(b.el); G.balls.push(b);
   if (G.balls.filter(x => x.kind !== 'ticket').length > 6) { const old = G.balls.find(x => x.kind !== 'ticket'); old.el.remove(); G.balls.splice(G.balls.indexOf(old), 1); }
 }
 function callNext() {
@@ -97,7 +99,7 @@ function callNext() {
   if (Math.random() < .3) { const u = G.order.slice(G.oi + 3).find(x => !G.ticket.includes(x)); if (u) spawnBall(u, 'uncalled'); }
 }
 function nearestBall() { let best = null, bd = 140; for (const b of G.balls) { const d = Math.hypot(b.x - G.px, b.y - G.py); if (d < bd) { bd = d; best = b; } } return best; }
-function doJump() { if (G.jump > 0 || ovRoot.children.length) return; G.jump = .45; G.jumps++; beep('jump'); }
+function doJump() { if (G.me.jump > 0 || ovRoot.children.length) return; G.me.jump = .5; G.jumps++; beep('jump'); }
 function doPick() {
   if (ovRoot.children.length || G.done) return; const b = nearestBall();
   if (!b) return toast('Không có quả lô tô nào ở gần – đi tới quả đang sáng!', 'bad');
@@ -151,14 +153,14 @@ SCREENS.result = {
       <div class="abs row" style="left:0;right:0;top:56px;justify-content:center;gap:28px">${winners.concat(losers).map((k, i) => `<div style="width:116px;height:116px;border-radius:50%;border:7px solid ${(i < 4) === win ? 'var(--lred)' : 'var(--lgreen)'};background:var(--cream) url(${charImg(k)}) center/contain no-repeat;${i >= 4 ? 'opacity:.6' : ''}"></div>`).join('')}</div>
       <div class="abs center stamp" style="left:0;right:0;top:200px;animation-delay:.25s">${jd(win ? 'ĐỎ THÌ KINH RỒI !!!' : 'XANH THÌ KINH RỒI !!!', { h: 175, stroke: win ? 'var(--lred)' : 'var(--lgreen)', sw: 9 })}</div>
       <div class="abs" style="left:0;right:0;top:505px;text-align:center;font-weight:800;font-size:30px">${win ? '🎉 Bạn đã KINH! Đội Đỏ chiến thắng!' : 'Tiếc quá! Đội Xanh về đích trước.'} <span style="opacity:.7">· Chạm để xem tổng kết →</span></div>
-      ${winners.map((k, i) => { const x = [150, 590, 1030, 1470][i], y = [770, 812, 812, 770][i]; return `<div class="abs podium-rise" style="left:0;top:0;animation-delay:${.5 + i * .15}s">${podium(!win, `left:${x}px;top:${y}px`)}</div><img src="${charImg(k)}" class="abs char-jump" style="left:${x + 30}px;top:${y - 200}px;width:260px;height:260px;object-fit:contain;animation-delay:${.9 + i * .18}s,${2 + i * .2}s">`; }).join('')}</div></div>`; },
+      ${winners.map((k, i) => { const x = [150, 590, 1030, 1470][i], y = [770, 812, 812, 770][i]; return `<div class="abs podium-rise" style="left:0;top:0;animation-delay:${.5 + i * .15}s">${podiumAt(!win, x + 160, y)}</div><div class="abs char-jump" style="left:0;top:0;width:1px;height:1px;animation-delay:${.9 + i * .18}s,${2 + i * .2}s">${charOn(k, x + 160, y + 52, 245)}</div>`; }).join('')}</div></div>`; },
   mount(el, p) { beep(p.win ? 'win' : 'bad'); if (p.win) confetti(el.querySelector('#cf')); const nx = () => cur === 'result' && go('summary', p, { push: false }); el.onclick = () => { beep(); nx(); }; setTimeout(nx, 4500); }
 };
 
 SCREENS.summary = {
   html: ({ win, got, extras }) => `<div class="abs" style="inset:0;background:var(--brown)"><div class="abs" style="inset:14px;overflow:hidden;background:linear-gradient(#FCC59A,#F8EDD9)">
     <div class="abs row" style="left:136px;top:140px;gap:24px"><img src="${IMG('coin.webp')}" width="180"><div style="margin-top:10px">${jd('X', { h: 110, sw: 7 })}</div><div id="cn">${jd('0', { h: 190, sw: 9 })}</div></div>
-    ${podium(false, 'left:230px;top:690px')}<img src="${charImg(S.char)}" class="abs" style="left:235px;top:420px;width:310px;height:314px;object-fit:contain">
+    ${podiumAt(false, 390, 690)}${charOn(S.char, 390, 742, 290, { cls: 'breath' })}
     <div class="abs pill" style="left:230px;top:870px;padding:10px 30px 12px 14px"><img src="${IMG('coin.webp')}" width="80"><span id="tc" data-coins style="font-weight:900;font-size:44px;color:var(--textd)">${fmt(S.coins)}</span></div>
     <div class="abs panel" style="left:966px;top:150px;width:820px;height:690px">
       <span class="tag red" style="position:absolute;left:50%;top:-28px;transform:translateX(-50%);font-size:28px;font-weight:800;padding:8px 30px 10px;border-width:5px">${win ? 'THẮNG' : 'THUA'} · KẾT QUẢ TRẬN ĐẤU</span>
@@ -184,3 +186,59 @@ SCREENS.summary = {
 function levelUp() { beep('win'); S.coins += 300; save(); const o = overlay({ title: 'CHÚC MỪNG', close: false, width: 760, cls: 'reward', body: `<div class="rw-stage" style="height:250px"><div class="rays"></div><div class="glow"></div>${'<i class="tw"></i>'.repeat(6)}<div style="position:relative;width:180px;height:210px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--textd)" class="center"><div class="center" style="width:160px;height:190px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--gold)">${jd(String(S.level), { h: 90, fill: 'var(--textd)', sw: 0, shadow: false })}</div></div></div>
   <div class="rw-amt">LÊN CẤP ${S.level}!</div><div style="font-weight:600;font-size:28px">Mở khoá khung avatar Tết + 300 xu</div>${btn('TUYỆT VỜI!', { color: 'green', icon: 'check', style: 'width:100%' })}` });
   confetti(o, 60); o.querySelector('.btn').onclick = () => { const r = rectOf(o.querySelector('.rw-stage')); o.close(); S.coins -= 300; setTimeout(() => { S.coins += 300; save(); coinFly(r.cx, r.cy, 300, { n: 10 }); }, 120); }; }
+
+/* ===== Entities: Goose-Goose-Duck style waddle movement ===== */
+function makeEnt(k, name, team, x, y) {
+  const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const h = 215, w = h * asp;
+  const el = document.createElement('div'); el.className = 'ent';
+  el.innerHTML = `<div class="sh" style="left:${(-sw * w / 2).toFixed(1)}px;top:-15px;width:${(sw * w).toFixed(1)}px;height:30px"></div>
+    <div class="sp" style="left:${(-ax * w).toFixed(1)}px;top:${(-ay * h).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;background-image:url(${charNS(k)});transform-origin:${(ax * 100).toFixed(1)}% ${(ay * 100).toFixed(1)}%"></div>
+    <div class="nm ${team}" style="top:${(-ay * h - 44).toFixed(1)}px">${name}</div>`;
+  G.ballsEl.appendChild(el);
+  return { k, name, team, x, y, vx: 0, vy: 0, face: 1, fs: 1, phase: 0, jump: 0, blend: 0, wasUp: false, seed: Math.random() * 6, el, sp: el.querySelector('.sp'), sh: el.querySelector('.sh'), nm: el.querySelector('.nm') };
+}
+function animEnt(e, dt, now, ix, iy, maxSp) {
+  const k = 1 - Math.exp(-dt * 14);                       // snappy accel / decel
+  e.vx += (ix * maxSp - e.vx) * k; e.vy += (iy * maxSp - e.vy) * k;
+  e.x = Math.max(120, Math.min(WORLD.w - 120, e.x + e.vx * dt)); e.y = Math.max(560, Math.min(WORLD.h - 60, e.y + e.vy * dt));
+  const spd = Math.hypot(e.vx, e.vy), moving = spd > 50, amt = Math.min(1, spd / 820);
+  if (e.vx < -35) e.face = -1; else if (e.vx > 35) e.face = 1;
+  e.fs += (e.face - e.fs) * (1 - Math.exp(-dt * 26));    // quick flip through 0 (paper-turn)
+  e.blend += ((moving ? 1 : 0) - e.blend) * (1 - Math.exp(-dt * 10));
+  e.phase += spd * dt / 92 * Math.PI;                     // one step every ~92px
+  const s = Math.sin(e.phase), lift = Math.abs(s);
+  const up = lift > .55; if (moving && e.wasUp && !up) stepFx(e); e.wasUp = up;
+  const hop = lift * (10 + 10 * amt) * e.blend;           // bounce per step
+  const waddle = s * 9 * e.blend + (e.vx / 820) * 6;       // rock side to side + lean into run
+  const squash = (1 - lift) * .08 * e.blend;               // squash on foot contact
+  const breathe = Math.sin(now / 1000 * 3.2 + e.seed) * .022 * (1 - e.blend);
+  if (e.jump > 0) e.jump = Math.max(0, e.jump - dt);
+  const jt = e.jump > 0 ? 1 - e.jump / .5 : 0, jy = e.jump > 0 ? Math.sin(jt * Math.PI) * 150 : 0;
+  const jsq = e.jump > 0 ? (jt < .12 ? -.12 : jt > .88 ? .12 : 0) : 0;
+  const sx = e.fs * (1 + squash + jsq * .8), sy = 1 - squash + breathe - jsq + (1 - Math.abs(e.fs)) * .08;
+  e.sp.style.transform = `translateY(${-(hop + jy).toFixed(1)}px) rotate(${waddle.toFixed(2)}deg) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
+  e.sh.style.transform = `scale(${(1 - (hop + jy) / 420).toFixed(3)})`; e.sh.style.opacity = (1 - jy / 300).toFixed(2);
+  e.nm.style.transform = `translate(-50%,${-(hop * .4 + jy).toFixed(1)}px)`;
+  e.el.style.transform = `translate(${e.x.toFixed(1)}px,${e.y.toFixed(1)}px)`; e.el.style.zIndex = Math.round(e.y) + 1;
+}
+function stepFx(e) {
+  const d = document.createElement('div'); d.className = 'dust'; d.style.left = (e.x - 17 - e.face * 30 + (Math.random() - .5) * 30) + 'px'; d.style.top = (e.y - 12) + 'px'; d.style.zIndex = Math.round(e.y) - 1;
+  G.ballsEl.appendChild(d); setTimeout(() => d.remove(), 620);
+  if (e === G.me) beep('step');
+}
+function botThink(e, dt, now) {
+  let ix = 0, iy = 0;
+  if (e.wait > 0) e.wait -= dt;
+  else {
+    if (!e.tx || Math.hypot(e.tx - e.x, e.ty - e.y) < 60) {
+      if (e.tx && e.goal && G.balls.includes(e.goal)) { const b = e.goal; b.el.classList.add('pop'); setTimeout(() => b.el.remove(), 360); G.balls.splice(G.balls.indexOf(b), 1);
+        const sx = e.x - G.cx, sy = e.y - G.cy - 200; if (sx > 0 && sx < 1920 && sy > 0 && sy < 1080) floatText(sx, sy, e.name.split(' ')[0] + ' lụm ' + b.n, e.team === 'red' ? 'var(--or5)' : '#7fe08a'); }
+      e.goal = null; e.wait = .4 + Math.random() * 1.6;
+      const decoys = G.balls.filter(b => b.kind !== 'ticket' && !G.bots.some(o => o.goal === b));
+      if (decoys.length && Math.random() < .45) { const b = decoys[Math.floor(Math.random() * decoys.length)]; e.goal = b; e.tx = b.x; e.ty = b.y; }
+      else { e.tx = Math.max(300, Math.min(WORLD.w - 300, e.x + (Math.random() - .5) * 2200)); e.ty = Math.max(800, Math.min(WORLD.h - 200, e.y + (Math.random() - .5) * 1800)); }
+    } else { const dx = e.tx - e.x, dy = e.ty - e.y, d = Math.hypot(dx, dy); ix = dx / d * e.speedK; iy = dy / d * e.speedK; }
+    if (Math.random() < dt * .08) e.jump = .5;
+  }
+  animEnt(e, dt, now, ix, iy, 820);
+}

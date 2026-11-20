@@ -51,7 +51,7 @@
 /* overlays */
 .ov .dim{animation:dimIn .25s}
 @keyframes dimIn{from{opacity:0}}
-.ov.closing .box{animation:popOut2 .19s ease-in forwards}
+.ov.closing > .box{animation:popOut2 .19s ease-in forwards}
 .ov.closing .dim{animation:dimOut .19s forwards}
 @keyframes popOut2{to{transform:translate(-50%,-50%) scale(.7);opacity:0}}
 @keyframes dimOut{to{opacity:0}}
@@ -83,7 +83,7 @@
 /* ambient */
 .fball{animation:drift 7s ease-in-out infinite}
 @keyframes drift{50%{translate:0 -16px}}
-.breath{animation:breath 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.breath{animation:breath 2.6s ease-in-out infinite}
 @keyframes breath{50%{scale:1.025 .975;translate:0 3px}}
 @keyframes hop{0%,60%,100%{translate:0 0}30%{translate:0 -38px}}
 .wiggle-slow{animation:wigs 2.8s ease-in-out infinite}
@@ -132,3 +132,14 @@ body.portrait #rotate{display:flex}
 @keyframes shim{from{translate:-100% 0}to{translate:100% 0}}
 .char-sel-pop{animation:popIn .45s cubic-bezier(.2,1.7,.4,1)}
 .btn.nodash::after{display:none}
+
+/* ---------- entities ---------- */
+.ent{position:absolute;left:0;top:0;width:0;height:0;will-change:transform}
+.ent .sh{position:absolute;border-radius:50%;background:rgba(50,20,12,.3)}
+.ent .sp{position:absolute;background-size:contain;background-repeat:no-repeat;background-position:center bottom;will-change:transform}
+.ent .nm{position:absolute;left:0;white-space:nowrap;background:var(--cream);border:3px solid var(--brown);border-radius:10px;padding:2px 14px 4px;font-weight:800;font-size:20px;transform:translateX(-50%)}
+.ent .nm.me{background:var(--gold);font-size:22px}
+.ent .nm.red{background:var(--lred);color:#fff}
+.ent .nm.green{background:var(--lgreen);color:#fff}
+.minimap i.bot{width:12px;height:12px;margin:-6px;border:2px solid #fff}
+.minimap i.bot.red{background:var(--lred)} .minimap i.bot.green{background:var(--lgreen)}

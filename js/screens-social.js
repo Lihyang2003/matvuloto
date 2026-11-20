@@ -10,7 +10,7 @@ SCREENS.leaderboard = {
     const D = { 'Tuần': [['ho', 'Hổ con', 2480], ['rong', 'Rồng vàng', 2315], ['chuot', 'Chuột chút chít', 2190], ['meo', 'Mèo mướp', 1980], [me.k, me.n, 1875], ['khi', 'Khỉ lém', 1720], ['cho', 'Cún nhà', 1650]],
       'Tháng': [['rong', 'Rồng vàng', 9820], [me.k, me.n, 9410], ['ga', 'Gà gáy sớm', 9005], ['ho', 'Hổ con', 8770], ['heo', 'Heo ủn ỉn', 8320], ['ngua', 'Ngựa phi', 8100], ['trau', 'Trâu cày', 7950]] }[tab];
     const pod = [[1, 260, 190, 1.15], [0, 10, 280, 1], [2, 520, 300, 1]].map(([i, x, y, sc]) => { const [k, n, xp] = D[i];
-      return `${podium(i > 0, `left:${x}px;top:${y + 190 * sc}px;transform:scale(${.78 * sc});transform-origin:top left`)}<img src="${charImg(k)}" class="abs" style="left:${x + 125 * .78 * sc - 110 * sc}px;top:${y + 20}px;width:${220 * sc}px">
+      const ps = .78 * sc, pcx = x + 160 * ps; return `${podiumAt(i > 0, pcx, y + 190 * sc, ps)}${charOn(k, pcx, y + 190 * sc + 50 * ps + 2, 205 * sc, { cls: 'breath' })}
         <div class="abs center" style="left:${x + 125 * .78 * sc - 30}px;top:${y - 30}px;width:60px;height:60px;border-radius:50%;border:4px solid var(--brown);background:${['var(--gold)', 'var(--cream2)', 'var(--or5)'][i]};font:32px var(--num);color:var(--textd)">${i + 1}</div>
         <div class="abs" style="left:${x - 20}px;width:${250 * .78 * sc + 40}px;top:${y + 190 * sc + 125 * sc}px;text-align:center"><b style="font-weight:800;font-size:24px;display:block">${n}</b><b style="font-weight:900;font-size:22px;color:var(--red)">${fmt(xp)} XP</b></div>`; }).join('');
     return `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('XẾP HẠNG', 'blue')}
@@ -38,7 +38,7 @@ SCREENS.quests = {
 SCREENS.profile = {
   html: () => `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('HỒ SƠ', 'blue')}
     <div class="abs panel col" style="left:110px;top:232px;width:620px;padding:24px 30px 30px;align-items:center;gap:16px">
-      <div style="position:relative;width:560px;height:430px;cursor:pointer" data-go="character">${podium(false, 'left:120px;top:270px')}<img src="${charImg(S.char)}" class="abs" style="left:120px;top:0;width:320px;height:320px;object-fit:contain"></div>
+      <div style="position:relative;width:560px;height:430px;cursor:pointer" data-go="character">${podiumAt(false, 280, 270)}${charOn(S.char, 280, 322, 300, { cls: 'breath' })}</div>
       <div class="row" style="gap:14px"><b style="font-weight:900;font-size:40px">${S.name}</b><div class="center" data-rename style="width:56px;height:56px;border-radius:50%;background:var(--or5);border:4px solid var(--brown);box-shadow:var(--hard-s);cursor:pointer">${ic('pencil', 'var(--brown)', 28)}</div></div>
       <span style="font-weight:600;font-size:22px;color:var(--brown5)">ID: 2027-0612 · ${S.guest ? 'Tài khoản khách' : 'Tham gia từ Tết 2026'}</span>
       <div class="row" style="gap:14px"><span class="tag gold" style="font-size:24px">Lv.${S.level}</span><div style="width:380px;height:26px;border-radius:13px;border:3px solid var(--brown);background:var(--cream2);overflow:hidden"><div style="height:100%;width:${(S.lvProg || 0) / xpNeed(S.level) * 100}%;background:var(--green5)"></div></div></div></div>
