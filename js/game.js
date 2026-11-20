@@ -189,13 +189,14 @@ function levelUp() { beep('win'); S.coins += 300; save(); const o = overlay({ ti
 
 /* ===== Entities: Goose-Goose-Duck style waddle movement ===== */
 function makeEnt(k, name, team, x, y) {
-  const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const h = 215, w = h * asp;
+  const R = RIG[k], h = 220, s = h / R.h, w = R.w * s, [ax, ay] = R.anchor, sw = (R.shadowW || R.w * .6) * s;
   const el = document.createElement('div'); el.className = 'ent';
-  el.innerHTML = `<div class="sh" style="left:${(-sw * w / 2).toFixed(1)}px;top:-15px;width:${(sw * w).toFixed(1)}px;height:30px"></div>
-    <div class="sp" style="left:${(-ax * w).toFixed(1)}px;top:${(-ay * h).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;background-image:url(${charNS(k)});transform-origin:${(ax * 100).toFixed(1)}% ${(ay * 100).toFixed(1)}%"></div>
-    <div class="nm ${team}" style="top:${(-ay * h - 44).toFixed(1)}px">${name}</div>`;
+  el.innerHTML = `<div class="sh" style="left:${(-sw / 2).toFixed(1)}px;top:-15px;width:${sw.toFixed(1)}px;height:30px"></div>
+    <div class="sp rig" style="left:${(-ax * s).toFixed(1)}px;top:${(-ay * s).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * s).toFixed(1)}px ${(ay * s).toFixed(1)}px">${rigLayers(k)}</div>
+    <div class="nm ${team}" style="top:${(-ay * s - 44).toFixed(1)}px">${name}</div>`;
   G.ballsEl.appendChild(el);
-  return { k, name, team, x, y, vx: 0, vy: 0, face: 1, fs: 1, phase: 0, jump: 0, blend: 0, wasUp: false, seed: Math.random() * 6, el, sp: el.querySelector('.sp'), sh: el.querySelector('.sh'), nm: el.querySelector('.nm') };
+  const parts = {}; el.querySelectorAll('[data-part]').forEach(p => parts[p.dataset.part] = p);
+  return { k, name, team, x, y, vx: 0, vy: 0, face: 1, fs: 1, phase: 0, jump: 0, blend: 0, wasUp: false, seed: Math.random() * 6, el, parts, sp: el.querySelector('.sp'), sh: el.querySelector('.sh'), nm: el.querySelector('.nm') };
 }
 function animEnt(e, dt, now, ix, iy, maxSp) {
   const k = 1 - Math.exp(-dt * 14);                       // snappy accel / decel
@@ -208,8 +209,8 @@ function animEnt(e, dt, now, ix, iy, maxSp) {
   e.phase += spd * dt / 92 * Math.PI;                     // one step every ~92px
   const s = Math.sin(e.phase), lift = Math.abs(s);
   const up = lift > .55; if (moving && e.wasUp && !up) stepFx(e); e.wasUp = up;
-  const hop = lift * (10 + 10 * amt) * e.blend;           // bounce per step
-  const waddle = s * 9 * e.blend + (e.vx / 820) * 6;       // rock side to side + lean into run
+  const hop = lift * (5 + 7 * amt) * e.blend;             // body bounce per step (feet do the stepping)
+  const waddle = s * 7 * e.blend + (e.vx / 820) * 6;       // rock side to side + lean into run
   const squash = (1 - lift) * .08 * e.blend;               // squash on foot contact
   const breathe = Math.sin(now / 1000 * 3.2 + e.seed) * .022 * (1 - e.blend);
   if (e.jump > 0) e.jump = Math.max(0, e.jump - dt);
@@ -219,6 +220,15 @@ function animEnt(e, dt, now, ix, iy, maxSp) {
   e.sp.style.transform = `translateY(${-(hop + jy).toFixed(1)}px) rotate(${waddle.toFixed(2)}deg) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
   e.sh.style.transform = `scale(${(1 - (hop + jy) / 420).toFixed(3)})`; e.sh.style.opacity = (1 - jy / 300).toFixed(2);
   e.nm.style.transform = `translate(-50%,${-(hop * .4 + jy).toFixed(1)}px)`;
+  // skeletal parts: alternate stepping feet, swinging arm, counter-balancing head, wagging tail
+  const P = e.parts, b = e.blend, fl = Math.max(0, s), fr = Math.max(0, -s), c = Math.cos(e.phase), air = e.jump > 0;
+  if (P.footL) P.footL.style.transform = air ? 'translateY(-10px) rotate(-14deg)' : `translate(${(c * 7 * b).toFixed(1)}px,${(-fl * 18 * b).toFixed(1)}px) rotate(${(-fl * 14 * b).toFixed(1)}deg)`;
+  if (P.footR) P.footR.style.transform = air ? 'translateY(-10px) rotate(14deg)' : `translate(${(-c * 7 * b).toFixed(1)}px,${(-fr * 18 * b).toFixed(1)}px) rotate(${(fr * 14 * b).toFixed(1)}deg)`;
+  const idleT = now / 1000 + e.seed;
+  if (P.head) P.head.style.transform = `translateY(${(Math.sin(e.phase * 2) * 3 * b + Math.sin(idleT * 2.2) * 2 * (1 - b)).toFixed(1)}px) rotate(${(-waddle * .5 + Math.sin(idleT * 1.6) * 3 * (1 - b)).toFixed(2)}deg)`;
+  if (P.arm) P.arm.style.transform = `rotate(${(air ? -35 : s * 24 * b + Math.sin(idleT * 3.4) * 12 * (1 - b)).toFixed(1)}deg)`;
+  if (P.tail) P.tail.style.transform = `rotate(${(Math.sin(idleT * (b ? 9 : 4)) * (10 + 8 * b)).toFixed(1)}deg)`;
+  if (P.body) P.body.style.transform = `scale(${(1 + squash * .3).toFixed(3)},${(1 - squash * .3 + breathe).toFixed(3)})`;
   e.el.style.transform = `translate(${e.x.toFixed(1)}px,${e.y.toFixed(1)}px)`; e.el.style.zIndex = Math.round(e.y) + 1;
 }
 function stepFx(e) {

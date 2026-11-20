@@ -62,7 +62,12 @@ const CHARS = [
 const charImg = k => `assets/chars/${k}.webp`;
 const charNS = k => `assets/chars_ns/${k}.webp`;
 /* place a character so its feet (measured shadow centre) land exactly on (cx, cy); h = sprite height */
-function charOn(k, cx, cy, h, { cls = '', style = '', shadow = true } = {}) { const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const w = h * asp;
+function charOn(k, cx, cy, h, opts = {}) { return (window.RIG && RIG[k]) ? rigHTML(k, cx, cy, h, opts) : charFlat(k, cx, cy, h, opts); }
+/* skeletal rig: 6 layers cut from the Illustrator vectors, each rotating around its own joint */
+function rigLayers(k) { const R = RIG[k]; return R.order.map(n => { const p = R.parts[n]; return `<img class="rp rp-${n}" data-part="${n}" src="assets/rig/${k}_${n}.webp" draggable="false" style="transform-origin:${(p.pivot[0] / R.w * 100).toFixed(2)}% ${(p.pivot[1] / R.h * 100).toFixed(2)}%">`; }).join(''); }
+function rigHTML(k, cx, cy, h, { cls = '', style = '', shadow = true, idle = true } = {}) { const R = RIG[k], s = h / R.h, w = R.w * s, [ax, ay] = R.anchor, sw = (R.shadowW || R.w * .6) * s;
+  return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw / 2).toFixed(1)}px;top:${(cy - h * .035).toFixed(1)}px;width:${sw.toFixed(1)}px;height:${(h * .07).toFixed(1)}px"></div>` : ''}<div class="abs rig${idle ? ' idle' : ''} ${cls}" data-rig="${k}" style="left:${(cx - ax * s).toFixed(1)}px;top:${(cy - ay * s).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * s).toFixed(1)}px ${(ay * s).toFixed(1)}px;--d:${(Math.random() * -3).toFixed(2)}s;${style}">${rigLayers(k)}</div>`; }
+function charFlat(k, cx, cy, h, { cls = '', style = '', shadow = true } = {}) { const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const w = h * asp;
   return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw * w / 2).toFixed(1)}px;top:${(cy - h * .04).toFixed(1)}px;width:${(sw * w).toFixed(1)}px;height:${(h * .08).toFixed(1)}px"></div>` : ''}<img src="${charNS(k)}" class="abs ${cls}" style="left:${(cx - ax * w).toFixed(1)}px;top:${(cy - ay * h).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * 100).toFixed(1)}% ${(ay * 100).toFixed(1)}%;${style}">`; }
 /* podium centred on cx, top edge at y; returns html; top-surface centre is y + 50*scale */
 const podiumAt = (green, cx, y, s = 1, extra = '') => podium(green, `left:${cx - 160 * s}px;top:${y}px;transform:scale(${s});transform-origin:0 0;${extra}`);
