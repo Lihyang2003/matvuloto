@@ -73,39 +73,83 @@ const xpNeed = lv => 60 + lv * 2;
 
 /* ---------- Stage scaling ---------- */
 const stage = document.getElementById('stage');
-function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px,${(innerHeight - 1080 * s) / 2}px) scale(${s})`; }
+function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px,${(innerHeight - 1080 * s) / 2}px) scale(${s})`;
+  document.body.classList.toggle('portrait', innerHeight > innerWidth * 1.1 && innerWidth < 900); }
 addEventListener('resize', fit); fit();
 const toStage = (cx, cy) => { const r = stage.getBoundingClientRect(); const s = r.width / 1920; return [(cx - r.left) / s, (cy - r.top) / s]; };
+const fxRoot = document.getElementById('fx');
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- Sound (tiny WebAudio synth) ---------- */
+/* ---------- Sound + background music (WebAudio synth, no files) ---------- */
 let AC = null;
+const ac = () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch { AC = null; } return AC; };
+function tone(f, t, d, vol = .12, type = 'triangle', dest) { const a = ac(); if (!a) return; const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0008, t + d); o.connect(g).connect(dest || a.destination); o.start(t); o.stop(t + d + .03); return o; }
 function beep(type = 'click') {
-  if (!S.sound) return; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
-  const seq = { click:[[660,.05]], pick:[[880,.07],[1320,.09]], bad:[[220,.12]], call:[[520,.08],[780,.1]], win:[[523,.1],[659,.1],[784,.1],[1047,.25]], coin:[[1200,.05],[1600,.06]], jump:[[400,.06],[600,.06]] }[type] || [[600,.05]];
-  let t = AC.currentTime;
-  for (const [f, d] of seq) { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); t += d * .9; }
+  if (!S.sound) return; const a = ac(); if (!a) return; let t = a.currentTime;
+  if (type === 'whoosh') { const o = tone(300, t, .32, .07, 'sawtooth'); o && o.frequency.exponentialRampToValueAtTime(1400, t + .3); return; }
+  if (type === 'drop') { const o = tone(900, t, .25, .08, 'sine'); o && o.frequency.exponentialRampToValueAtTime(260, t + .24); return; }
+  const seq = { click: [[700, .06]], pick: [[880, .07], [1320, .1]], bad: [[230, .14], [180, .16]], call: [[523, .08], [784, .12]], pop: [[1000, .05]],
+    win: [[523, .1], [659, .1], [784, .1], [1047, .3]], coin: [[1318, .05], [1760, .08]], jump: [[392, .06], [587, .08]], kinh: [[523, .08], [659, .08], [784, .08], [1047, .12], [1318, .35]], tick: [[1500, .03]] }[type] || [[600, .05]];
+  for (const [f, d] of seq) { tone(f, t, d + .05, type === 'coin' ? .07 : .11); t += d * .9; }
+}
+let musicT = null;
+function music(on) { clearInterval(musicT); musicT = null; if (!on || !S.music) return; const a = ac(); if (!a) return;
+  const mel = [523, 0, 587, 659, 0, 784, 659, 587, 523, 0, 440, 0, 392, 440, 523, 0, 659, 0, 784, 880, 0, 784, 659, 0, 587, 659, 587, 523, 440, 0, 523, 0];
+  const bass = [131, 0, 0, 0, 196, 0, 0, 0, 175, 0, 0, 0, 196, 0, 0, 0]; let i = 0;
+  musicT = setInterval(() => { if (!S.music || document.hidden) return; const t = a.currentTime + .02; const n = mel[i % mel.length]; if (n) tone(n, t, .32, .028, 'triangle'); const b = bass[i % bass.length]; if (b) tone(b, t, .6, .03, 'sine'); i++; }, 240); }
+addEventListener('pointerdown', () => { if (S.music && !musicT) music(true); });
+
+/* ---------- FX helpers ---------- */
+function burst(x, y, { n = 9, colors = ['#F7C531', '#D63B2F', '#FFFDF8', '#2FA24A'], size = 18, dist = 110 } = {}) {
+  if (REDUCED) return; for (let i = 0; i < n; i++) { const p = document.createElement('div'); p.className = 'pt'; const a = Math.PI * 2 * i / n + Math.random() * .5, d = dist * (.6 + Math.random() * .6);
+    p.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${colors[i % colors.length]}`; fxRoot.appendChild(p);
+    p.animate([{ transform: 'translate(-50%,-50%) scale(1) rotate(0)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(.2) rotate(${Math.random() * 360}deg)`, opacity: 0 }], { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => p.remove(); } }
+function floatText(x, y, text, color = 'var(--gold)') { const t = document.createElement('div'); t.className = 'floattxt'; t.textContent = text; t.style.cssText = `left:${x}px;top:${y}px;color:${color}`; fxRoot.appendChild(t); setTimeout(() => t.remove(), 1100); }
+function shake(el = stage, mag = 14) { if (REDUCED) return; el.animate([0, 1, 2, 3, 4, 5].map(i => ({ translate: i === 5 ? '0 0' : `${(Math.random() - .5) * mag * 2}px ${(Math.random() - .5) * mag * 2}px` })), { duration: 380 }); }
+function rectOf(el) { const r = el.getBoundingClientRect(), [x, y] = toStage(r.left, r.top), [x2, y2] = toStage(r.right, r.bottom); return { x, y, w: x2 - x, h: y2 - y, cx: (x + x2) / 2, cy: (y + y2) / 2 }; }
+let shownCoins = null;
+function coinFly(fromX, fromY, amount, { n = 12, onDone } = {}) {
+  const pill = [...document.querySelectorAll('[data-coins]')].find(e => e.offsetParent); const tgt = pill ? rectOf(pill.closest('.pill') || pill) : { cx: 1760, cy: 70 };
+  const tx = pill ? tgt.x + 40 : tgt.cx, ty = tgt.cy; const start = S.coins - amount; let arrived = 0;
+  if (!pill) floatText(1700, 90, '+' + fmt(amount) + ' xu');
+  for (let i = 0; i < n; i++) { const c = document.createElement('img'); c.src = IMG('coin.webp'); c.className = 'flycoin'; c.style.left = fromX + 'px'; c.style.top = fromY + 'px'; fxRoot.appendChild(c);
+    const sx = (Math.random() - .5) * 260, sy = -60 - Math.random() * 160;
+    c.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 }, { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(1)`, opacity: 1, offset: .35 },
+      { transform: `translate(calc(-50% + ${tx - fromX}px), calc(-50% + ${ty - fromY}px)) scale(.55)`, opacity: 1 }], { duration: 900 + i * 45, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'forwards' })
+      .onfinish = () => { c.remove(); arrived++; beep('coin'); if (pill) { pill.textContent = fmt(Math.round(start + amount * arrived / n)); const pp = pill.closest('.pill') || pill; pp.classList.remove('bump'); void pp.offsetWidth; pp.classList.add('bump'); }
+        if (arrived === n) { refreshCoins(); onDone?.(); } }; }
 }
 
-/* ---------- Router ---------- */
+/* ---------- Router with iris transition ---------- */
 const SCREENS = {}; const hist = []; let cur = null; let curParams = {};
-function go(name, params = {}, { push = true } = {}) {
-  closeAllOverlays(); if (cur && SCREENS[cur].leave) SCREENS[cur].leave();
-  if (push && cur) hist.push([cur, curParams]); cur = name; curParams = params;
-  const el = document.createElement('div'); el.className = 'screen'; el.dataset.screen = name;
-  el.innerHTML = SCREENS[name].html(params);
-  stage.querySelector('.screen')?.remove(); stage.prepend(el);
-  SCREENS[name].mount?.(el, params);
-  try { history.replaceState(null, '', '#' + name); } catch {}
+const wipe = document.getElementById('wipe'); let lastPt = [960, 540];
+stage.addEventListener('pointerdown', e => { lastPt = toStage(e.clientX, e.clientY);
+  const hit = e.target.closest('.btn,.navbtn,.iconbtn,.chip,.hudbtn,[data-go],[data-dock],[data-char],[data-item],[data-map],[data-room],[data-key],[data-mail],[data-claim],.subcard[data-day],.switch,.seg span,.check');
+  if (hit) burst(lastPt[0], lastPt[1], { n: 7, size: 14, dist: 70 }); }, true);
+function build(name, params, enter) { const el = document.createElement('div'); el.className = 'screen' + (enter ? ' enter' : ''); el.dataset.screen = name; el.innerHTML = SCREENS[name].html(params);
+  if (enter) el.querySelectorAll('.panel,.navbtn,.pill,.iconbtn,.btn,.calledboard,.ticket,.hudbtn,.minimap,.joy').forEach((n, i) => n.style.animationDelay = (.08 + Math.min(i, 14) * .045) + 's');
+  return el; }
+function go(name, params = {}, { push = true, fx = true } = {}) {
+  if (name === cur && !push) { // in-place re-render: keep overlays (reward popups) alive
+    SCREENS[cur].leave?.(); curParams = params; const old = stage.querySelector('.screen'); const el = build(name, params, false); old ? old.replaceWith(el) : stage.prepend(el); SCREENS[name].mount?.(el, params); return; }
+  closeAllOverlays(); if (cur) SCREENS[cur].leave?.(); if (push && cur) hist.push([cur, curParams]);
+  const prev = cur; cur = name; curParams = params;
+  const swap = () => { const el = build(name, params, true); stage.querySelector('.screen')?.remove(); stage.prepend(el); SCREENS[name].mount?.(el, params); try { history.replaceState(null, '', '#' + name); } catch {} };
+  if (!fx || !prev || REDUCED) return swap();
+  beep('whoosh'); wipe.style.setProperty('--x', lastPt[0] + 'px'); wipe.style.setProperty('--y', lastPt[1] + 'px');
+  wipe.querySelector('.ball').textContent = 1 + Math.floor(Math.random() * 90); wipe.className = 'wipe in';
+  setTimeout(() => { swap(); wipe.className = 'wipe out'; setTimeout(() => { if (wipe.className === 'wipe out') wipe.className = 'wipe'; }, 460); }, 360);
 }
 function back(fallback = 'lobby') { const p = hist.pop(); if (p) go(p[0], p[1], { push: false }); else go(fallback, {}, { push: false }); }
 
 /* ---------- Overlays & toasts ---------- */
 const ovRoot = document.getElementById('overlays'), toastRoot = document.getElementById('toasts');
-function overlay({ title, color = 'red', width = 820, body = '', close = true, dimClose = true, onClose } = {}) {
-  const o = document.createElement('div'); o.className = 'ov';
+function overlay({ title, color = 'red', width = 820, body = '', close = true, dimClose = true, onClose, cls = '' } = {}) {
+  const o = document.createElement('div'); o.className = 'ov ' + cls; beep('pop');
   o.innerHTML = `<div class="dim"></div><div class="box panel" style="width:${width}px">${title ? `<div class="banner ${color}"><div class="in">${title}</div></div>` : ''}${close ? `<div class="x">${ic('x', '#fff')}</div>` : ''}${body}</div>`;
   ovRoot.appendChild(o);
-  const shut = () => { o.remove(); onClose?.(); };
+  const shut = () => { if (o.closing) return; o.closing = true; o.classList.add('closing'); setTimeout(() => { o.remove(); onClose?.(); }, 190); };
   o.close = shut;
   if (close) o.querySelector('.x').onclick = () => { beep(); shut(); };
   if (dimClose) o.querySelector('.dim').onclick = shut;
@@ -116,7 +160,7 @@ function toast(msg, kind = 'ok', icon = null) {
   const t = document.createElement('div'); t.className = 'toast ' + (kind === 'ok' ? '' : kind);
   t.innerHTML = `<div class="ic">${ic(icon || (kind === 'bad' ? 'x' : kind === 'info' ? 'bell' : 'check'), '#fff')}</div><div>${msg}</div>`;
   while (toastRoot.children.length >= 3) toastRoot.firstChild.remove(); toastRoot.appendChild(t); if (kind === 'bad') beep('bad');
-  setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = 0; setTimeout(() => t.remove(), 320); }, 1900);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, 2000);
 }
 function confirmBox({ title, text, yes = 'ĐỒNG Ý', no = 'HUỶ', yesColor = 'red', onYes }) {
   const o = overlay({ title, width: 760, body: `<div style="font-weight:600;font-size:30px;text-align:center;white-space:pre-line">${text}</div>
@@ -125,11 +169,14 @@ function confirmBox({ title, text, yes = 'ĐỒNG Ý', no = 'HUỶ', yesColor = 
   o.querySelector('[data-yes]').onclick = () => { beep(); o.close(); onYes?.(); };
   return o;
 }
-function reward({ img = 'li_xi.webp', amount = 500, text = 'Lì xì đầu năm đã vào ví của bạn!' }) {
-  S.coins += amount; save(); beep('coin');
-  const o = overlay({ title: 'PHẦN THƯỞNG', width: 700, close: false, body: `<div style="position:relative;width:300px;height:280px"><div style="position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,230,115,1),rgba(255,230,115,0))"></div><img src="${IMG(img)}" style="position:absolute;inset:20px;width:260px;height:240px;object-fit:contain"></div>
-    <div style="font-weight:900;font-size:64px;color:var(--red)">+${fmt(amount)} XU</div><div style="font-weight:600;font-size:28px">${text}</div><button class="btn btn-l green" style="width:100%">NHẬN</button>` });
-  o.querySelector('.btn').onclick = () => { beep(); o.close(); refreshCoins(); };
+function reward({ img = 'li_xi.webp', amount = 500, text = 'Lì xì đầu năm đã vào ví của bạn!', title = 'PHẦN THƯỞNG', onDone } = {}) {
+  S.coins += amount; save(); beep('win');
+  const o = overlay({ title, width: 720, close: false, dimClose: false, cls: 'reward', body: `<div class="rw-stage"><div class="rays"></div><div class="glow"></div><img class="rw-img" src="${IMG(img)}">${'<i class="tw"></i>'.repeat(6)}</div>
+    <div class="rw-amt">+<span>0</span> XU</div><div style="font-weight:600;font-size:28px;text-align:center">${text}</div><button class="btn btn-l green" style="width:100%">${ic('check', '#fff')}<span>NHẬN</span></button>` });
+  const span = o.querySelector('.rw-amt span'); let k = 0; const iv = setInterval(() => { k++; span.textContent = fmt(Math.round(amount * Math.min(1, k / 20))); if (k % 4 === 0) beep('tick'); if (k >= 20) clearInterval(iv); }, 35);
+  const box = o.querySelector('.box'); setTimeout(() => { const r = rectOf(o.querySelector('.rw-img')); burst(r.cx, r.cy, { n: 16, size: 20, dist: 220 }); }, 260);
+  o.querySelector('.btn').onclick = () => { beep(); const r = rectOf(o.querySelector('.rw-img')); o.close(); setTimeout(() => coinFly(r.cx, r.cy, amount, { n: Math.min(16, 6 + Math.round(amount / 100)), onDone }), 120); };
+  return o;
 }
 function refreshCoins() { document.querySelectorAll('[data-coins]').forEach(e => e.textContent = fmt(S.coins)); }
 
@@ -146,7 +193,7 @@ const coinPill = (attrs = '') => `<div class="pill" ${attrs}><img src="${IMG('co
 const bgGame = () => `<div class="bg-game"><div class="in">${fadedBalls(22, 99, 0.22)}</div></div>`;
 function fadedBalls(n, seed, op) { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; let h = ''; const placed = [];
   for (let t = 0; placed.length < n && t < 3000; t++) { const x = r() * 1850 - 30, y = r() * 1000 - 30; if (placed.some(([a, b]) => Math.hypot(a - x, b - y) < 210)) continue; placed.push([x, y]);
-    h += `<div class="fball" style="left:${x}px;top:${y}px;transform:rotate(${r() * 80 - 40}deg) scale(${.6 + r() * .35});opacity:${op}">${String(1 + Math.floor(r() * 90)).padStart(2, '0')}</div>`; } return h; }
+    h += `<div class="fball" style="animation-duration:${5 + r() * 5}s;animation-delay:-${r() * 5}s;left:${x}px;top:${y}px;transform:rotate(${r() * 80 - 40}deg) scale(${.6 + r() * .35});opacity:${op}">${String(1 + Math.floor(r() * 90)).padStart(2, '0')}</div>`; } return h; }
 function bgOnb() { let seeds = ''; const kinds = [['22px','40px','var(--red)'],['24px','24px','var(--or5)'],['22px','40px','var(--green)'],['24px','24px','var(--blue)']]; let i = 0;
   const put = (x, y, rot) => { const [w, h, c] = kinds[i++ % 4]; seeds += `<div class="seed" style="left:${x}px;top:${y}px;width:${w};height:${h};background:${c};transform:translate(-50%,-50%) rotate(${h === '40px' ? 30 + rot : 0}deg)"></div>`; };
   for (let x = 120; x <= 1820; x += 112) { put(x, 54, 0); } for (let y = 150; y <= 960; y += 112) put(1866, y + 56, 90);

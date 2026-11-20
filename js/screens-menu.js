@@ -1,17 +1,17 @@
 /* ===== Splash / Onboard / Login / Register / Tutorial / Lobby / Character / Shop ===== */
 SCREENS.splash = {
-  html: () => `${bgOnb()}<div class="abs center" style="left:0;right:0;top:150px">${logo(1)}</div>
-    <div class="abs" style="left:510px;top:700px;width:900px;height:56px;border-radius:28px;background:var(--cream);border:6px solid var(--brown);overflow:hidden"><div id="lb" style="height:100%;width:0;background:var(--red);border-radius:28px;transition:width 1.6s ease-in-out"></div></div>
+  html: () => `${bgOnb()}<div class="abs center stamp" style="left:0;right:0;top:150px">${logo(1)}</div>
+    <div class="abs" style="left:510px;top:700px;width:900px;height:56px;border-radius:28px;background:var(--cream);border:6px solid var(--brown);overflow:hidden"><div id="lb" class="shimmer" style="height:100%;width:0;background:var(--red);border-radius:28px;transition:width .3s ease-out"></div></div>
     <div id="lt" class="abs" style="left:0;right:0;top:780px;text-align:center;font-weight:800;font-size:30px">Đang tải bản đồ nhà ngoại...</div>
     <div class="abs" style="left:0;right:0;top:840px;text-align:center;font-weight:600;font-size:24px;color:var(--brown5)">Mẹo: đứng lên quả lô tô đang sáng rồi bấm LỤM để cho vào túi!</div>`,
-  mount(el) { requestAnimationFrame(() => el.querySelector('#lb').style.width = '100%');
+  mount(el) { const t0 = performance.now(); let ready = false; const lb = el.querySelector('#lb');
     const next = () => { if (cur === 'splash') go(S.logged ? 'lobby' : 'onboard', {}, { push: false }); };
-    setTimeout(() => { el.querySelector('#lt').textContent = 'Sẵn sàng! Chạm để vào game'; el.onclick = () => { beep(); next(); }; }, 1700);
-    setTimeout(next, 3200); }
+    const iv = setInterval(() => { const p = window.PRE ? PRE.n / PRE.total : 1; const tp = Math.min(1, (performance.now() - t0) / 1400); lb.style.width = Math.round(Math.min(p, tp) * 100) + '%';
+      if (p >= 1 && tp >= 1 && !ready) { ready = true; clearInterval(iv); el.querySelector('#lt').textContent = 'Sẵn sàng! Chạm để vào game'; el.onclick = () => { beep(); next(); }; setTimeout(next, 1400); } }, 80); }
 };
 
 SCREENS.onboard = {
-  html: () => `${bgOnb()}<div class="abs center" style="left:0;right:0;top:40px">${logo(.85)}</div>
+  html: () => `${bgOnb()}<div class="abs center wiggle-slow" style="left:0;right:0;top:40px">${logo(.85)}</div>
     ${ball(27, 'abs').replace('class="ball abs', 'style="left:600px;top:250px;transform:rotate(14deg) scale(1.2)" class="ball abs')}
     ${ball(86, 'abs').replace('class="ball abs', 'style="left:1210px;top:210px;transform:rotate(-12deg) scale(1.2)" class="ball abs')}
     <div class="abs col" style="left:580px;top:512px;width:760px;gap:34px">
@@ -77,15 +77,15 @@ SCREENS.lobby = {
     <div class="abs pill" data-go="profile" style="left:60px;top:44px;padding:10px 28px 12px 12px;cursor:pointer"><div style="width:88px;height:88px;border-radius:50%;background:var(--or5) url(${charImg(S.char)}) center/contain no-repeat;border:4px solid var(--brown)"></div>
       <div class="col" style="gap:6px"><span style="font-size:28px;font-weight:800">${S.name}</span><div class="row" style="gap:10px"><span class="tag gold" style="font-size:18px">Lv.${S.level}</span>
       <div style="width:160px;height:16px;border-radius:8px;border:2px solid var(--brown);background:var(--cream2);overflow:hidden"><div style="height:100%;width:${Math.min(100, (S.lvProg || 0) / xpNeed(S.level) * 100)}%;background:var(--green5)"></div></div></div></div></div>
-    <div class="abs center" style="left:0;right:0;top:20px;pointer-events:none">${logo(.55)}</div>
+    <div class="abs center" style="left:0;right:0;top:18px;pointer-events:none">${logo(.43)}</div>
     <div class="abs row" style="right:60px;top:48px;gap:18px">${coinPill('data-go="shopxu" style="cursor:pointer"')}
       <div class="iconbtn" data-go="mail">${ic('mail', 'var(--brown)')}${unreadMails() ? `<span class="dot-badge">${unreadMails()}</span>` : ''}</div>
       <div class="iconbtn" data-help>${ic('help', 'var(--brown)')}</div><div class="iconbtn" data-go="settings">${ic('settings', 'var(--brown)')}</div></div>
     <div class="abs" style="left:130px;top:230px;width:620px;height:700px;cursor:pointer" data-go="character">${podium(false, 'left:85px;top:420px;transform:scale(1.4);transform-origin:top center')}
-      <img src="${charImg(S.char)}" class="abs" style="left:110px;top:60px;width:400px;height:400px;object-fit:contain">
+      <img src="${charImg(S.char)}" class="abs breath" style="left:110px;top:60px;width:400px;height:400px;object-fit:contain">
       <div class="abs" style="left:0;right:0;top:640px;display:flex;justify-content:center"><span class="tag blue" style="font-size:22px;padding:8px 22px 10px;box-shadow:var(--hard-s)">${ic('refresh', '#fff', 26)} ĐỔI NHÂN VẬT</span></div></div>
     <div class="abs col" style="left:1030px;top:250px;width:720px;gap:30px">${btn('CHƠI NHANH', { icon: 'zap', attrs: 'data-go="find"' })}${btn('TẠO PHÒNG', { color: 'blue', icon: 'plus', attrs: 'data-go="create"' })}${btn('VÀO PHÒNG', { color: 'yellow', icon: 'hash', attrs: 'data-go="join"' })}
-      <div class="row" style="align-self:center;gap:16px;background:var(--red);border:5px solid var(--brown);border-radius:24px;padding:12px 26px 14px 16px;box-shadow:var(--hard-s);cursor:pointer" data-go="quests"><img src="${IMG('coin_chest.webp')}" width="80"><div class="col" style="color:var(--cream)"><b style="font-size:28px;font-weight:900">SỰ KIỆN TẾT</b><span style="font-weight:700;font-size:20px">Lụm 50 số – nhận Rương xu!</span></div></div></div>
+      <div class="row wiggle-slow" style="align-self:center;gap:16px;background:var(--red);border:5px solid var(--brown);border-radius:24px;padding:12px 26px 14px 16px;box-shadow:var(--hard-s);cursor:pointer" data-go="quests"><img src="${IMG('coin_chest.webp')}" width="80"><div class="col" style="color:var(--cream)"><b style="font-size:28px;font-weight:900">SỰ KIỆN TẾT</b><span style="font-weight:700;font-size:20px">Lụm 50 số – nhận Rương xu!</span></div></div></div>
     <div class="abs row panel" style="right:70px;bottom:60px;gap:22px;padding:18px 28px 20px;border-radius:36px">
       ${[['Nhân vật', 'character', `<img src="${charImg('chuot')}" width="72">`], ['Shop', 'shop', `<img src="${IMG('ao_dai_tet.webp')}" width="72">`], ['Nhiệm vụ', 'quests', `<img src="${IMG('li_xi.webp')}" width="72">`, questsReady()],
         ['Xếp hạng', 'leaderboard', `<img src="${IMG('trophy.webp')}" width="72">`], ['Bạn bè', 'friends', ic('users', 'var(--brown)', 60)], ['Điểm danh', 'daily', `<img src="${IMG('gift.webp')}" width="72">`, S.daily < 7 && !S.claimedToday ? '!' : 0]]
@@ -118,17 +118,17 @@ SCREENS.character = {
         <div style="position:relative;height:100%;border-radius:14px;background:${k === sel ? 'var(--or5)' : 'var(--cream)'} url(${charImg(k)}) right 6px top 6px/118px no-repeat"><span class="tag ${k === sel ? '' : 'cream'}" style="position:absolute;left:10px;top:10px;font-size:22px;${k === sel ? 'background:var(--brown);color:var(--cream)' : ''}">${n}</span></div></div>`).join('')}</div></div>
     <div class="abs panel" style="left:1000px;top:232px;width:810px;height:452px;padding:24px"><div style="position:relative;height:100%;border-radius:26px;overflow:hidden;background:radial-gradient(circle at 45% 40%,#FFEEC7,#F5C77D)">
       <span class="abs" style="left:400px;top:34px;font-weight:800;font-size:22px;letter-spacing:.12em;color:var(--brown5)">PREVIEW</span>
-      ${podium(false, 'left:50px;top:250px')}<img src="${charImg(sel)}" class="abs" style="left:60px;top:30px;width:300px;height:300px;object-fit:contain">
+      ${podium(false, 'left:50px;top:250px')}<img src="${charImg(sel)}" class="abs breath char-sel-pop" style="left:60px;top:30px;width:300px;height:300px;object-fit:contain">
       ${S.wearing && S.wearing !== 'ao' ? `<img src="${IMG(ITEMS[S.wearing][1])}" class="abs" style="left:${S.wearing === 'kinh' ? 150 : S.wearing === 'nonla' ? 110 : 140}px;top:${S.wearing === 'kinh' ? 100 : S.wearing === 'nonla' ? -10 : 170}px;width:${S.wearing === 'nonla' ? 200 : 130}px">` : ''}
       <div class="abs col" style="left:400px;top:70px;width:340px;gap:14px"><span class="tag blue" style="align-self:flex-start">Con giáp #${idx + 1}</span><div style="font-weight:900;font-size:84px;line-height:1">${c[1].toUpperCase()}</div>
         <div style="font-weight:600;font-size:26px">${c[2]}</div><div class="row" style="gap:10px"><span class="tag cream" style="font-size:18px">Tốc độ ★★★</span><span class="tag cream" style="font-size:18px">May mắn ★★</span></div></div></div></div>
     <div class="abs panel" style="left:1000px;top:706px;width:810px;padding:18px 26px 24px"><div class="sec-head" style="margin-bottom:14px"><div class="numbadge b" style="transform:scale(.8)">02</div>TRANG PHỤC</div>
       <div class="row" style="gap:14px">${Object.entries(ITEMS).map(([k, [n, im]]) => { const own = S.owned.includes(k), w = S.wearing === k;
-        return `<div data-item="${k}" class="row" style="flex:1;gap:4px;padding:6px 8px;border-radius:18px;cursor:pointer;background:${w ? 'var(--or5)' : 'var(--cream2)'};border:${w ? '5px solid var(--red)' : '4px solid var(--brown)'};${own ? '' : 'opacity:.6'}"><img src="${IMG(im)}" width="48" height="48"><b style="font-weight:800;font-size:17px">${own ? '' : '🔒 '}${n}</b></div>`; }).join('')}</div></div>
+        return `<div data-item="${k}" class="row" style="flex:1;gap:4px;padding:6px 8px;border-radius:18px;cursor:pointer;background:${w ? 'var(--or5)' : 'var(--cream2)'};border:${w ? '5px solid var(--red)' : '4px solid var(--brown)'};${own ? '' : 'opacity:.6'}"><img src="${IMG(im)}" width="44" height="44"><b style="font-weight:800;font-size:16px;white-space:nowrap">${own ? '' : '🔒 '}${n}</b></div>`; }).join('')}</div></div>
     <div class="abs" style="left:1105px;top:946px">${btn('XÁC NHẬN', { color: 'green', icon: 'check', attrs: 'data-ok', style: 'width:600px' })}</div>`; },
   mount(el) { wireCommon(el);
-    on(el, '[data-char]', (e, d) => { S.char = d.dataset.char; save(); go('character', {}, { push: false }); });
-    on(el, '[data-item]', (e, d) => { const k = d.dataset.item; if (!S.owned.includes(k)) { toast('Chưa có ' + ITEMS[k][0] + ' – mua trong Shop nhé!', 'info', 'gift'); return; } S.wearing = k; save(); go('character', {}, { push: false }); });
+    on(el, '[data-char]', (e, d) => { S.char = d.dataset.char; save(); beep('pick'); go('character', {}, { push: false }); });
+    on(el, '[data-item]', (e, d) => { const k = d.dataset.item; if (!S.owned.includes(k)) { toast('Chưa có ' + ITEMS[k][0] + ' – mua trong Shop nhé!', 'info', 'gift'); return; } S.wearing = k; save(); beep('pick'); go('character', {}, { push: false }); });
     on(el, '[data-ok]', () => { toast('Đã chọn ' + CHARS.find(c => c[0] === S.char)[1] + '!'); back(); }); }
 };
 
@@ -151,8 +151,8 @@ function mountShop(el, tab) { wireCommon(el);
   on(el, '[data-wear]', () => go('character'));
   on(el, '[data-buy]', (e, d) => { const k = d.dataset.buy, p = ITEMS[k][2]; if (S.coins < p) return toast('Không đủ xu – nạp thêm ở tab Gói xu!', 'bad');
     confirmBox({ title: 'MUA ĐỒ', text: `Mua ${ITEMS[k][0]} với giá ${fmt(p)} xu?`, yes: 'MUA', yesColor: 'green', onYes: () => { S.coins -= p; S.owned.push(k); S.wearing = k; save(); beep('coin');
-      const o = overlay({ title: 'MUA THÀNH CÔNG!', width: 720, body: `<img src="${IMG(ITEMS[k][1])}" width="240"><div style="font-weight:600;font-size:26px;text-align:center">${ITEMS[k][0]} đã vào tủ đồ và đang được mặc!</div>${btn('TUYỆT VỜI!', { color: 'green', style: 'width:100%' })}` });
-      o.querySelector('.btn').onclick = () => { o.close(); go(cur, {}, { push: false }); }; } }); });
+      beep('win'); const o = overlay({ title: 'MUA THÀNH CÔNG!', width: 720, cls: 'reward', body: `<div class="rw-stage"><div class="rays"></div><div class="glow"></div><img class="rw-img" src="${IMG(ITEMS[k][1])}">${'<i class="tw"></i>'.repeat(6)}</div><div style="font-weight:600;font-size:26px;text-align:center">${ITEMS[k][0]} đã vào tủ đồ và đang được mặc!</div>${btn('TUYỆT VỜI!', { color: 'green', style: 'width:100%' })}` });
+      o.querySelector('.btn').onclick = () => { o.close(); refreshCoins(); go(cur, {}, { push: false }); }; setTimeout(() => { const r = rectOf(o.querySelector('.rw-img')); burst(r.cx, r.cy, { n: 16, size: 20, dist: 220 }); }, 250); } }); });
   on(el, '[data-pack]', (e, d) => { const [n, im, , price, amt] = SHOP['Gói xu'][+d.dataset.pack];
     if (+d.dataset.pack === 0) { if (S.freeToday) return toast('Hôm nay bạn đã nhận rồi, mai quay lại nhé!', 'info'); S.freeToday = true; save(); return reward({ img: im, amount: amt, text: 'Quà miễn phí hôm nay!' }); }
     confirmBox({ title: 'NẠP XU', text: `${n}: ${price}\n(Prototype – không trừ tiền thật)`, yes: 'THANH TOÁN', yesColor: 'green', onYes: () => reward({ img: im, amount: amt, text: n + ' đã vào ví!' }) }); }); }

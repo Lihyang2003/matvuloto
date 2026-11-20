@@ -25,7 +25,7 @@ SCREENS.leaderboard = {
 };
 
 SCREENS.quests = {
-  html: () => `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('NHIỆM VỤ', 'red', 'Làm mới sau 08:24:16')}
+  html: () => `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('NHIỆM VỤ', 'red', 'Làm mới sau 08:24:16')}<div class="abs" style="right:110px;top:66px">${coinPill()}</div>
     <div class="abs col" style="left:310px;top:240px;width:1300px;gap:18px">${QUESTS.map(([n, im, c, m, r], i) => { const ready = c >= m, done = S.quests[i];
       return `<div class="row panel" style="gap:24px;padding:16px 24px 16px 20px;border-radius:28px;border-width:5px;box-shadow:var(--hard-s)"><div class="center" style="width:100px;height:100px;border-radius:20px;background:var(--or3);border:3px solid var(--brown)"><img src="${IMG(im)}" width="80"></div>
         <div class="col" style="flex:1;gap:10px"><b style="font-weight:800;font-size:28px">${n}</b><div class="row" style="gap:14px"><div style="width:520px;height:26px;border-radius:13px;border:3px solid var(--brown);background:var(--cream2);overflow:hidden"><div style="height:100%;width:${c / m * 100}%;background:var(--green5)"></div></div><b style="font-weight:900;font-size:22px;color:var(--brown5)">${c}/${m}</b></div></div>
@@ -66,7 +66,7 @@ SCREENS.friends = {
 function wireInvites(root) { on(root, '[data-inv]', (e, b) => { const [n, onl] = b.dataset.inv.split('|'); if (onl === 'true') { b.classList.add('disabled'); b.querySelector('span').textContent = 'ĐÃ MỜI'; toast('Đã mời ' + n + ' vào phòng!', 'ok', 'send'); } else toast('Đã nhắn tin cho ' + n, 'info', 'message'); }); }
 
 SCREENS.mail = {
-  html: () => `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('HỘP THƯ', 'blue', unreadMails() + ' thư chưa đọc')}
+  html: () => `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('HỘP THƯ', 'blue', unreadMails() + ' thư chưa đọc')}<div class="abs" style="right:110px;top:66px">${coinPill()}</div>
     <div class="abs col" style="left:310px;top:240px;width:1300px;gap:18px">${MAILS.map(([im, t, d, amt], i) => { const read = S.mails[i];
       return `<div class="row panel" data-mail="${i}" style="gap:22px;padding:16px 26px 16px 20px;border-radius:28px;border:${read ? '3px' : '5px'} solid ${read ? 'var(--brown)' : 'var(--red)'};background:${read ? 'var(--cream2)' : 'var(--cream)'};box-shadow:var(--hard-s);cursor:pointer">
         <div class="center" style="width:100px;height:100px;border-radius:20px;background:var(--or3);border:3px solid var(--brown)"><img src="${IMG(im)}" width="80"></div><div class="col" style="flex:1;gap:8px"><b style="font-weight:800;font-size:28px">${t}</b><span style="font-weight:600;font-size:22px;color:var(--brown5)">${d.slice(0, 70)}${d.length > 70 ? '…' : ''}</span></div>
@@ -88,7 +88,7 @@ SCREENS.settings = {
       <div class="row" style="gap:18px">${btn('HỖ TRỢ', { color: 'white', size: 'm', icon: 'help', attrs: 'data-support', style: 'flex:1' })}${btn('HƯỚNG DẪN', { color: 'yellow', size: 'm', attrs: 'data-tut', style: 'flex:1' })}${btn('ĐĂNG XUẤT', { size: 'm', attrs: 'data-logout', style: 'flex:1' })}</div>
       <div class="row" style="justify-content:space-between;font-weight:600;font-size:20px;color:var(--brown5)"><span>Phiên bản 1.0.0 (web prototype) · © Mật Vụ Lô Tô</span><span class="link" data-reset style="color:var(--brown5)">Xoá dữ liệu chơi thử</span></div></div>`,
   mount(el) { wireCommon(el);
-    on(el, '[data-sw]', (e, s) => { const k = s.dataset.sw; S[k] = !S[k]; s.classList.toggle('on', S[k]); save(); });
+    on(el, '[data-sw]', (e, s) => { const k = s.dataset.sw; S[k] = !S[k]; s.classList.toggle('on', S[k]); save(); if (k === 'music') music(S[k]); });
     el.querySelectorAll('[data-seg] span').forEach(sp => sp.onclick = () => { beep(); const seg = sp.parentElement; S[seg.dataset.seg] = sp.dataset.v; save(); seg.querySelectorAll('span').forEach(x => x.classList.toggle('on', x === sp)); if (seg.dataset.seg === 'lang' && sp.dataset.v === 'en') toast('English đang được dịch – sắp ra mắt!', 'info', 'globe'); });
     on(el, '[data-support]', () => toast('Đã gửi yêu cầu hỗ trợ – CSKH sẽ liên hệ bạn sớm!', 'ok', 'help'));
     on(el, '[data-tut]', () => go('tutorial', { step: 0, then: 'settings' }));

@@ -143,7 +143,7 @@ input{font-family:inherit}
 
 /* ---------- Game ---------- */
 #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-#world .map{position:absolute;left:0;top:0;width:2400px;height:2875px;background:url(../assets/img/world.jpg) 0 0/100% 100%}
+#world .map{position:absolute;left:0;top:0;width:5120px;height:6134px;background:url(../assets/img/world.jpg) 0 0/100% 100%}
 .wball{position:absolute;width:150px;height:130px;margin-left:-75px;margin-top:-118px;pointer-events:none}
 .wball .glow{position:absolute;left:0;top:90px;width:150px;height:46px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,230,110,.95),rgba(255,215,80,0))}
 .wball .ball{position:absolute;left:30px;top:0;animation:bob 1.2s ease-in-out infinite}
@@ -174,7 +174,7 @@ input{font-family:inherit}
 .hudbtn.ready{animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 18px rgba(247,197,49,.55),0 8px 0 rgba(90,28,19,.45)}}
 .minimap{position:absolute;width:270px;height:270px;border-radius:50%;border:9px solid var(--brown);overflow:hidden;box-shadow:0 8px 0 rgba(90,28,19,.45);cursor:pointer;background:#7a9}
-.minimap .mm{position:absolute;background:url(../assets/img/world.jpg) 0 0/100% 100%}
+.minimap .mm{position:absolute;background:url(../assets/img/world_small.jpg) 0 0/100% 100%}
 .minimap i{position:absolute;width:14px;height:14px;margin:-7px;border-radius:50%;background:var(--gold);border:2px solid var(--brown)}
 .minimap i.me{width:22px;height:22px;margin:-11px;background:var(--red);border:4px solid #fff}
 .kinhbtn{position:absolute;left:50%;bottom:120px;transform:translateX(-50%)}

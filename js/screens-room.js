@@ -23,7 +23,7 @@ SCREENS.create = {
       <div class="panel orange col" style="width:393px;height:250px;padding:18px 26px;gap:16px;justify-content:center"><div class="sec-head" style="font-size:34px"><div class="numbadge r" style="transform:scale(.8)">04</div>CODE PHÒNG</div>
         <div class="row" data-copy style="justify-content:space-between;padding:20px 18px 22px 22px;border-radius:20px;border:5px solid var(--brown);background:var(--cream);cursor:pointer"><span style="font-weight:900;font-size:30px;white-space:nowrap">${r.code}</span>${ic('copy', 'var(--brown)', 34)}</div></div></div>
     <div class="abs" style="left:1105px;top:946px">${btn('TẠO PHÒNG', { attrs: 'data-create', style: 'width:600px' })}</div>`; },
-  mount(el) { wireCommon(el); const re = () => go('create', {}, { push: false }); ROOM.host = true;
+  mount(el) { wireCommon(el); el.querySelector('[data-rand]')?.classList.add('nodash'); const re = () => go('create', {}, { push: false }); ROOM.host = true;
     on(el, '[data-map]', (e, d) => { ROOM.map = +d.dataset.map; re(); }); on(el, '[data-rand]', () => { ROOM.map = (ROOM.map + 1 + Math.floor(Math.random() * 2)) % 3; re(); });
     on(el, '[data-pl]', (e, d) => { ROOM.players = Math.max(2, Math.min(16, ROOM.players + +d.dataset.pl)); re(); }); on(el, '[data-plq]', (e, d) => { ROOM.players = +d.dataset.plq; re(); });
     on(el, '[data-time]', (e, d) => { ROOM.time = +d.dataset.time; re(); }); on(el, '[data-priv]', (e, d) => { ROOM.priv = d.dataset.priv === 'true'; re(); });
@@ -106,7 +106,7 @@ SCREENS.countdown = {
   html: () => `<div class="abs" style="inset:0;background:url(${IMG('bg_kitchen.jpg')}) center/cover"></div><div class="abs" style="inset:0;background:rgba(31,10,5,.5)"></div>
     <div id="cd" class="abs center" style="inset:0"></div><div id="cds" class="abs" style="left:0;right:0;top:900px;text-align:center;font-weight:800;font-size:40px;color:var(--cream)">Chuẩn bị... đi lụm số nào!</div>`,
   mount(el) { const cd = el.querySelector('#cd'); let n = 3;
-    const step = () => { if (cur !== 'countdown') return; if (n > 0) { cd.innerHTML = `<div class="ball ${n === 2 ? 'g' : ''}" style="transform:scale(3.4);animation:pop .3s">${n}</div>`; beep('call'); n--; setTimeout(step, 850); }
-      else { cd.innerHTML = jd('BẮT ĐẦU!', { h: 220, sw: 10 }); el.querySelector('#cds').textContent = 'Lụm đủ 5 số trên vé để KINH!'; beep('win'); setTimeout(() => cur === 'countdown' && go('game', {}, { push: false }), 900); } };
+    const step = () => { if (cur !== 'countdown') return; if (n > 0) { cd.innerHTML = `<div style="transform:scale(3.4)"><div class="ball ${n === 2 ? 'g' : ''}" style="animation:spinIn .45s cubic-bezier(.2,1.5,.4,1)">${n}</div></div>`; burst(960, 540, { n: 12, dist: 300, size: 22 }); beep('call'); n--; setTimeout(step, 850); }
+      else { cd.innerHTML = `<div class="stamp">${jd('BẮT ĐẦU!', { h: 220, sw: 10 })}</div>`; shake(stage, 18); burst(960, 520, { n: 24, dist: 520, size: 26 }); el.querySelector('#cds').textContent = 'Lụm đủ 5 số trên vé để KINH!'; beep('win'); setTimeout(() => cur === 'countdown' && go('game', {}, { push: false }), 900); } };
     step(); }
 };

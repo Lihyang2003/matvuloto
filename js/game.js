@@ -1,5 +1,5 @@
 /* ===== Real-time gameplay, result & summary ===== */
-const WORLD = { w: 2400, h: 2875 };
+const WORLD = { w: 5120, h: 6134 };
 const G = {};
 SCREENS.game = {
   html: () => `<div class="abs" style="inset:0;background:#c97a5d;overflow:hidden" id="view"><div id="world"><div class="map"></div><div id="balls"></div><div id="player"><div class="sh"></div><div class="sp" style="background-image:url(${charImg(S.char)})"></div><div class="nm">Bạn</div></div></div></div>
@@ -29,13 +29,13 @@ function startGame(el) {
   // calling order: ticket numbers interleaved early so a round lasts ~1.5–2 min
   const order = []; const slots = [1, 4, 8, 12, 17]; let ti = 0, ri = 0;
   for (let i = 0; i < 60; i++) order.push(slots.includes(i) ? ticket[ti++] : rest[ri++]);
-  Object.assign(G, { el, running: true, t: 165, px: 1708, py: 1080, vx: 0, vy: 0, face: 1, jump: 0, keys: {}, joy: [0, 0], ticket, got: [], called: [], order, oi: 0, nextCall: 1.2,
+  Object.assign(G, { el, running: true, t: 165, px: 3644, py: 2304, cx: 0, cy: 0, dustT: 0, vx: 0, vy: 0, face: 1, jump: 0, keys: {}, joy: [0, 0], ticket, got: [], called: [], order, oi: 0, nextCall: 1.2,
     balls: [], extras: [], opp: 0, oppNext: rnd(24, 34), last: performance.now(), done: false, jumps: 0 });
   const $ = s => el.querySelector(s);
   G.world = $('#world'); G.player = $('#player'); G.sp = G.player.querySelector('.sp'); G.ballsEl = $('#balls'); G.mm = $('#mm');
   renderTicket(); renderCalled();
   // minimap scale
-  G.mmS = 270 / 900; G.mm.style.width = WORLD.w * G.mmS + 'px'; G.mm.style.height = WORLD.h * G.mmS + 'px';
+  G.mmS = 270 / 1700; G.mm.style.width = WORLD.w * G.mmS + 'px'; G.mm.style.height = WORLD.h * G.mmS + 'px';
   // keyboard
   G.kd = e => { if (cur !== 'game') return; const k = e.key.toLowerCase(); G.keys[k] = true; if (k === ' ' ) { e.preventDefault(); doJump(); } if (k === 'e') doPick(); if (k === 'k' || k === 'enter') doKinh(); if (k === 'escape') openPause(); if (k === 'm') openMap(); if (k === 'b') openBag(); };
   G.ku = e => { G.keys[e.key.toLowerCase()] = false; };
@@ -60,37 +60,39 @@ function loop(now) {
   // timers
   G.t -= dt; if (G.t <= 0 && !G.done) return endGame(false, 'HẾT GIỜ!');
   G.nextCall -= dt; if (G.nextCall <= 0) { G.nextCall = 3.4; callNext(); }
-  G.oppNext -= dt; if (G.oppNext <= 0 && !G.done) { G.opp++; G.oppNext = 22 + Math.random() * 14; G.el.querySelector('#opp').textContent = G.opp + '/5'; if (G.opp >= 4) toast('Đội Xanh sắp KINH rồi – nhanh lên!', 'bad', 'zap'); if (G.opp >= 5) return endGame(false); }
+  G.oppNext -= dt; if (G.oppNext <= 0 && !G.done) { G.opp++; G.oppNext = 22 + Math.random() * 14; const oe = G.el.querySelector('#opp'); oe.textContent = G.opp + '/5'; oe.classList.remove('bump'); void oe.offsetWidth; oe.classList.add('bump'); beep('bad'); if (G.opp >= 4) toast('Đội Xanh sắp KINH rồi – nhanh lên!', 'bad', 'zap'); if (G.opp >= 5) return endGame(false); }
   // movement
   let ix = (G.keys['arrowright'] || G.keys['d'] ? 1 : 0) - (G.keys['arrowleft'] || G.keys['a'] ? 1 : 0) + G.joy[0];
   let iy = (G.keys['arrowdown'] || G.keys['s'] ? 1 : 0) - (G.keys['arrowup'] || G.keys['w'] ? 1 : 0) + G.joy[1];
   const l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; }
-  const sp = 560; G.px = Math.max(90, Math.min(WORLD.w - 90, G.px + ix * sp * dt)); G.py = Math.max(260, Math.min(WORLD.h - 30, G.py + iy * sp * dt));
+  const sp = 820; G.px = Math.max(120, Math.min(WORLD.w - 120, G.px + ix * sp * dt)); G.py = Math.max(560, Math.min(WORLD.h - 60, G.py + iy * sp * dt));
+  G.dustT -= dt; if (l > .2 && G.jump === 0 && G.dustT <= 0) { G.dustT = .11; const d = document.createElement('div'); d.className = 'dust'; d.style.left = (G.px - 17 - ix * 50 + (Math.random() - .5) * 40) + 'px'; d.style.top = (G.py - 14) + 'px'; G.ballsEl.appendChild(d); setTimeout(() => d.remove(), 620); }
   if (ix < -.1) G.face = -1; else if (ix > .1) G.face = 1;
   if (G.jump > 0) G.jump = Math.max(0, G.jump - dt);
   const jy = G.jump > 0 ? -Math.sin((1 - G.jump / .45) * Math.PI) * 120 : 0; const walk = l > .1 ? Math.sin(now / 70) * 6 : 0;
   G.player.style.left = G.px + 'px'; G.player.style.top = G.py + 'px';
   G.sp.style.transform = `translateY(${jy + walk}px) scaleX(${G.face})`;
   G.player.querySelector('.sh').style.transform = `scale(${1 - (-jy) / 300})`;
-  const cx = Math.max(0, Math.min(WORLD.w - 1920, G.px - 960)), cy = Math.max(0, Math.min(WORLD.h - 1080, G.py - 600));
+  const cx = Math.max(0, Math.min(WORLD.w - 1920, G.px - 960)), cy = Math.max(0, Math.min(WORLD.h - 1080, G.py - 620)); G.cx = cx; G.cy = cy;
   G.world.style.transform = `translate(${-cx}px,${-cy}px)`;
   // minimap
   G.mm.style.left = (135 - G.px * G.mmS) + 'px'; G.mm.style.top = (135 - G.py * G.mmS) + 'px';
   if (!G._mmT || now - G._mmT > 200) { G._mmT = now; G.mm.innerHTML = G.balls.map(b => `<i style="left:${b.x * G.mmS}px;top:${b.y * G.mmS}px;${b.kind === 'ticket' ? '' : 'background:#fff;width:9px;height:9px;margin:-4px'}"></i>`).join('') + `<i class="me" style="left:${G.px * G.mmS}px;top:${G.py * G.mmS}px"></i>`; }
   // timer text + nearby highlight
-  const tt = Math.max(0, Math.ceil(G.t)); G.el.querySelector('#timer').textContent = Math.floor(tt / 60) + ':' + String(tt % 60).padStart(2, '0');
+  const tt = Math.max(0, Math.ceil(G.t)); const te = G.el.querySelector('#timer'); te.textContent = Math.floor(tt / 60) + ':' + String(tt % 60).padStart(2, '0'); te.classList.toggle('low', tt <= 20);
   const near = nearestBall(); G.el.querySelector('#bPick').classList.toggle('ready', !!near);
 }
 
 function spawnBall(n, kind) {
-  let x, y, t = 0; do { x = 220 + Math.random() * 1960; y = 420 + Math.random() * 2250; t++; } while (Math.hypot(x - G.px, y - G.py) < 420 && t < 30);
-  const b = { n, kind, x, y, el: document.createElement('div') }; b.el.className = 'wball' + (kind === 'ticket' ? '' : ' decoy'); b.el.style.left = x + 'px'; b.el.style.top = y + 'px';
-  b.el.innerHTML = `<div class="glow"></div>${ball(n, 'sm')}`; G.ballsEl.appendChild(b.el); G.balls.push(b);
+  let x, y, t = 0; do { x = 470 + Math.random() * 4180; y = 900 + Math.random() * 4790; t++; const d = Math.hypot(x - G.px, y - G.py); if (d > 650 && d < (kind === 'ticket' ? 2300 : 3200)) break; } while (t < 80);
+  const b = { n, kind, x, y, el: document.createElement('div') }; b.el.className = 'wball drop' + (kind === 'ticket' ? '' : ' decoy'); beep('drop'); b.el.style.left = x + 'px'; b.el.style.top = y + 'px';
+  b.el.innerHTML = `${kind === 'ticket' ? '<div class="beam"></div>' : ''}<div class="glow"></div>${ball(n, 'sm')}`; G.ballsEl.appendChild(b.el); G.balls.push(b);
   if (G.balls.filter(x => x.kind !== 'ticket').length > 6) { const old = G.balls.find(x => x.kind !== 'ticket'); old.el.remove(); G.balls.splice(G.balls.indexOf(old), 1); }
 }
 function callNext() {
   if (G.oi >= G.order.length) return; const n = G.order[G.oi++]; G.called.push(n); renderCalled(); beep('call');
-  if (G.ticket.includes(n)) { spawnBall(n, 'ticket'); toast(`Gọi số ${n} – có trong vé của bạn! Xem minimap để tìm.`, 'info', 'bell'); }
+  const mine = G.ticket.includes(n); const co = document.createElement('div'); co.className = 'callout' + (mine ? ' mine' : ''); co.innerHTML = `${ball(n)}<span>SỐ ${n}!${mine ? ' <span style="color:var(--red)">CÓ TRONG VÉ</span>' : ''}</span>`; G.el.querySelector('.hud').appendChild(co); setTimeout(() => co.remove(), 2250);
+  if (mine) { spawnBall(n, 'ticket'); }
   else if (Math.random() < .45) spawnBall(n, 'called');
   if (Math.random() < .3) { const u = G.order.slice(G.oi + 3).find(x => !G.ticket.includes(x)); if (u) spawnBall(u, 'uncalled'); }
 }
@@ -102,16 +104,20 @@ function doPick() {
   if (b.kind === 'uncalled' && !G.called.includes(b.n)) { toast(`Số ${b.n} chưa được gọi – không lụm được!`, 'bad'); b.el.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 250 }); return; }
   b.el.classList.add('pop'); setTimeout(() => b.el.remove(), 360); G.balls.splice(G.balls.indexOf(b), 1);
   const sp = document.createElement('div'); sp.className = 'spark'; sp.style.left = (b.x - 30) + 'px'; sp.style.top = (b.y - 200) + 'px';
-  if (G.ticket.includes(b.n) && !G.got.includes(b.n)) { G.got.push(b.n); beep('pick'); sp.textContent = '+1 vé!'; renderTicket(); toast(`Lụm được số ${b.n}! Vé ${G.got.length}/5`, 'ok', 'check');
-    if (G.got.length === 5) { G.el.querySelector('#kinh').classList.remove('hidden'); toast('Đủ 5 số rồi! Bấm KINH ngay!', 'info', 'trophy'); beep('win'); } }
-  else { G.extras.push(b.n); beep('coin'); sp.textContent = '+1 xu'; toast(`Số ${b.n} không có trong vé – nhận +1 xu`, 'info', 'gift'); }
-  G.world.appendChild(sp); setTimeout(() => sp.remove(), 1000);
+  const sx = b.x - G.cx, sy = b.y - G.cy - 70;
+  if (G.ticket.includes(b.n) && !G.got.includes(b.n)) { G.got.push(b.n); beep('pick'); floatText(sx, sy - 60, '+1 VÉ!'); burst(sx, sy, { n: 12, dist: 140 });
+    const slot = G.el.querySelectorAll('#ticket .ball')[G.ticket.indexOf(b.n)]; const r = rectOf(slot); const fly = document.createElement('div'); fly.innerHTML = ball(b.n, 'sm'); fly.style.cssText = `position:absolute;left:${sx}px;top:${sy}px;translate:-50% -50%`; fxRoot.appendChild(fly);
+    fly.animate([{ transform: 'scale(1)' }, { transform: `translate(${(r.cx - sx) * .5}px, ${(r.cy - sy) * .5 - 160}px) scale(1.25)`, offset: .5 }, { transform: `translate(${r.cx - sx}px, ${r.cy - sy}px) scale(.72)` }], { duration: 650, easing: 'cubic-bezier(.4,0,.3,1)' }).onfinish = () => { fly.remove(); renderTicket(); burst(r.cx, r.cy, { n: 10, dist: 90 }); beep('coin');
+      if (G.got.length === 5) { G.el.querySelector('#kinh').classList.remove('hidden'); toast('Đủ 5 số rồi! Bấm KINH ngay!', 'info', 'trophy'); beep('win'); } }; }
+  else { G.extras.push(b.n); beep('coin'); floatText(sx, sy - 40, '+1 xu'); burst(sx, sy, { n: 6, dist: 80 }); }
 }
 function doKinh() { if (G.done || ovRoot.children.length) return; if (G.got.length < 5) return toast(`Chưa đủ số để KINH – vé mới ${G.got.length}/5!`, 'bad'); endGame(true); }
 function renderTicket() { const e = G.el.querySelector('#ticket'); e.innerHTML = G.ticket.map(n => `<div class="ball xs ${n > 45 ? 'g' : ''} ${G.got.includes(n) ? 'got' : ''}">${n}</div>`).join(''); G.el.querySelector('#mine').textContent = G.got.length + '/5'; }
 function renderCalled() { G.el.querySelector('#called').innerHTML = G.called.slice(-4).map(n => ball(n, 'sm')).join(''); }
 function endGame(win, why) { if (G.done) return; G.done = true; G.running = false; cancelAnimationFrame(G.raf);
   const fl = document.createElement('div'); fl.className = 'flash'; G.el.appendChild(fl);
+  if (win) { const k = document.createElement('div'); k.className = 'kinh-splash'; k.innerHTML = `<div class="rays"></div><div class="word">${jd('KINH!', { h: 330, fill: 'var(--red)', sw: 14 })}</div>`; G.el.appendChild(k); confetti(k, 90); shake(stage, 22); beep('kinh'); burst(960, 540, { n: 30, dist: 700, size: 28 });
+    setTimeout(() => go('result', { win, got: G.got.length, extras: G.extras.length, jumps: G.jumps }, { push: false }), 1900); return; }
   if (!win && why) toast(why === 'HẾT GIỜ!' ? 'Hết giờ! Đội Xanh thắng.' : why, 'bad', 'clock');
   setTimeout(() => go('result', { win, got: G.got.length, extras: G.extras.length, jumps: G.jumps }, { push: false }), 900); }
 
@@ -121,7 +127,7 @@ function openBag() { if (ovRoot.children.length) return; overlay({ title: '', wi
   <b style="font-weight:700;font-size:28px;color:var(--cream)">Vé ${G.got.length}/5 · thêm ${G.extras.length} số ngoài vé</b>
   <div class="row" style="gap:28px;padding:28px 40px;border-radius:30px;background:var(--cream);border:6px solid var(--gold);flex-wrap:wrap;justify-content:center;max-width:880px">${G.ticket.map(n => G.got.includes(n) ? ball(n) : `<div class="ball empty">?</div>`).join('')}</div>
   ${G.extras.length ? `<div class="row" style="gap:12px;flex-wrap:wrap;justify-content:center">${G.extras.slice(-8).map(n => ball(n, 'xs')).join('')}</div>` : ''}<b style="font-weight:700;font-size:22px;color:var(--cream);opacity:.85">Chạm ra ngoài để đóng túi</b>`, close: false }); }
-function openMap() { if (ovRoot.children.length) return; const s = 640 / WORLD.w; overlay({ title: 'BẢN ĐỒ · ' + MAPS[ROOM.map][0].toUpperCase(), width: 760, dimClose: false, body: `<div style="position:relative;width:640px;height:${WORLD.h * s}px;border:5px solid var(--brown);border-radius:14px;overflow:hidden;background:url(${IMG('../img/world.jpg')}) 0 0/100% 100%">
+function openMap() { if (ovRoot.children.length) return; const s = 640 / WORLD.w; overlay({ title: 'BẢN ĐỒ · ' + MAPS[ROOM.map][0].toUpperCase(), width: 760, dimClose: false, body: `<div style="position:relative;width:640px;height:${WORLD.h * s}px;border:5px solid var(--brown);border-radius:14px;overflow:hidden;background:url(${IMG('world_small.jpg')}) 0 0/100% 100%">
   ${G.balls.map(b => `<div style="position:absolute;left:${b.x * s - 13}px;top:${b.y * s - 13}px;width:26px;height:26px;border-radius:50%;background:${b.kind === 'ticket' ? 'var(--gold)' : '#fff'};border:3px solid var(--brown)"></div>`).join('')}
   <div style="position:absolute;left:${G.px * s - 30}px;top:${G.py * s - 30}px;width:60px;height:60px;border-radius:50%;background:rgba(211,63,42,.3)"></div><div style="position:absolute;left:${G.px * s - 14}px;top:${G.py * s - 14}px;width:28px;height:28px;border-radius:50%;background:var(--red);border:4px solid #fff"></div>
   <span class="tag red" style="position:absolute;left:${G.px * s - 50}px;top:${G.py * s + 18}px;font-size:16px">Bạn ở đây</span></div>
@@ -132,7 +138,7 @@ function openBoard() { if (ovRoot.children.length) return; const o = overlay({ t
   ${btn('KINH!', { attrs: 'data-k', style: 'width:420px' })}` }); on(o, '[data-k]', () => { if (G.got.length < 5) return toast(`Chưa đủ số – vé mới ${G.got.length}/5!`, 'bad'); o.close(); doKinh(); }); }
 function openPause() { if (ovRoot.children.length) return; const o = overlay({ title: 'CÀI ĐẶT', color: 'blue', width: 900, body: `${[['Âm thanh', 'sound'], ['Nhạc nền', 'music']].map(([l, k]) => `<div class="row subcard" style="width:100%;padding:12px 20px 12px 26px"><b style="flex:1;font-weight:800;font-size:30px">${l}</b><div class="switch ${S[k] ? 'on' : ''}" data-sw="${k}"></div></div>`).join('')}
   ${btn('TIẾP TỤC', { color: 'green', size: 'm', attrs: 'data-cont', style: 'width:100%' })}<div class="row" style="gap:18px;width:100%">${btn('ĐẦU HÀNG', { color: 'yellow', size: 'm', attrs: 'data-give', style: 'flex:1' })}${btn('VỀ SẢNH', { size: 'm', attrs: 'data-exit', style: 'flex:1' })}</div>` });
-  on(o, '[data-sw]', (e, s) => { const k = s.dataset.sw; S[k] = !S[k]; s.classList.toggle('on', S[k]); save(); });
+  on(o, '[data-sw]', (e, s) => { const k = s.dataset.sw; S[k] = !S[k]; s.classList.toggle('on', S[k]); save(); if (k === 'music') music(S[k]); });
   on(o, '[data-cont]', () => o.close());
   on(o, '[data-give]', () => { o.close(); endGame(false, 'Bạn đã đầu hàng – Đội Xanh thắng.'); });
   on(o, '[data-exit]', () => { o.close(); confirmBox({ title: 'THOÁT TRẬN?', text: 'Thoát bây giờ sẽ bị tính thua\nvà mất số đã lụm trong túi!', no: 'CHƠI TIẾP', yes: 'THOÁT', onYes: () => { G.done = true; go('lobby'); } }); }); }
@@ -143,9 +149,9 @@ SCREENS.result = {
     return `<div class="abs" style="inset:0;background:var(--brown)"><div class="abs" style="inset:14px;overflow:hidden;background:linear-gradient(#FCC59A,#F8EDD9)">
       <div class="abs" style="left:560px;top:0;width:772px;height:1052px;clip-path:polygon(0 0,100% 0,173% 100%,-73% 100%);background:${win ? 'rgba(255,244,232,.5)' : 'rgba(233,227,160,.55)'}"></div><div id="cf"></div>
       <div class="abs row" style="left:0;right:0;top:56px;justify-content:center;gap:28px">${winners.concat(losers).map((k, i) => `<div style="width:116px;height:116px;border-radius:50%;border:7px solid ${(i < 4) === win ? 'var(--lred)' : 'var(--lgreen)'};background:var(--cream) url(${charImg(k)}) center/contain no-repeat;${i >= 4 ? 'opacity:.6' : ''}"></div>`).join('')}</div>
-      <div class="abs center" style="left:0;right:0;top:200px">${jd(win ? 'ĐỎ THÌ KINH RỒI !!!' : 'XANH THÌ KINH RỒI !!!', { h: 175, stroke: win ? 'var(--lred)' : 'var(--lgreen)', sw: 9 })}</div>
+      <div class="abs center stamp" style="left:0;right:0;top:200px;animation-delay:.25s">${jd(win ? 'ĐỎ THÌ KINH RỒI !!!' : 'XANH THÌ KINH RỒI !!!', { h: 175, stroke: win ? 'var(--lred)' : 'var(--lgreen)', sw: 9 })}</div>
       <div class="abs" style="left:0;right:0;top:505px;text-align:center;font-weight:800;font-size:30px">${win ? '🎉 Bạn đã KINH! Đội Đỏ chiến thắng!' : 'Tiếc quá! Đội Xanh về đích trước.'} <span style="opacity:.7">· Chạm để xem tổng kết →</span></div>
-      ${winners.map((k, i) => { const x = [150, 590, 1030, 1470][i], y = [770, 812, 812, 770][i]; return `${podium(!win, `left:${x}px;top:${y}px`)}<img src="${charImg(k)}" class="abs" style="left:${x + 30}px;top:${y - 200}px;width:260px;height:260px;object-fit:contain">`; }).join('')}</div></div>`; },
+      ${winners.map((k, i) => { const x = [150, 590, 1030, 1470][i], y = [770, 812, 812, 770][i]; return `<div class="abs podium-rise" style="left:0;top:0;animation-delay:${.5 + i * .15}s">${podium(!win, `left:${x}px;top:${y}px`)}</div><img src="${charImg(k)}" class="abs char-jump" style="left:${x + 30}px;top:${y - 200}px;width:260px;height:260px;object-fit:contain;animation-delay:${.9 + i * .18}s,${2 + i * .2}s">`; }).join('')}</div></div>`; },
   mount(el, p) { beep(p.win ? 'win' : 'bad'); if (p.win) confetti(el.querySelector('#cf')); const nx = () => cur === 'result' && go('summary', p, { push: false }); el.onclick = () => { beep(); nx(); }; setTimeout(nx, 4500); }
 };
 
@@ -153,7 +159,7 @@ SCREENS.summary = {
   html: ({ win, got, extras }) => `<div class="abs" style="inset:0;background:var(--brown)"><div class="abs" style="inset:14px;overflow:hidden;background:linear-gradient(#FCC59A,#F8EDD9)">
     <div class="abs row" style="left:136px;top:140px;gap:24px"><img src="${IMG('coin.webp')}" width="180"><div style="margin-top:10px">${jd('X', { h: 110, sw: 7 })}</div><div id="cn">${jd('0', { h: 190, sw: 9 })}</div></div>
     ${podium(false, 'left:230px;top:690px')}<img src="${charImg(S.char)}" class="abs" style="left:235px;top:420px;width:310px;height:314px;object-fit:contain">
-    <div class="abs pill" style="left:230px;top:870px;padding:10px 30px 12px 14px"><img src="${IMG('coin.webp')}" width="80"><span id="tc" style="font-weight:900;font-size:44px;color:var(--textd)">${fmt(S.coins)}</span></div>
+    <div class="abs pill" style="left:230px;top:870px;padding:10px 30px 12px 14px"><img src="${IMG('coin.webp')}" width="80"><span id="tc" data-coins style="font-weight:900;font-size:44px;color:var(--textd)">${fmt(S.coins)}</span></div>
     <div class="abs panel" style="left:966px;top:150px;width:820px;height:690px">
       <span class="tag red" style="position:absolute;left:50%;top:-28px;transform:translateX(-50%);font-size:28px;font-weight:800;padding:8px 30px 10px;border-width:5px">${win ? 'THẮNG' : 'THUA'} · KẾT QUẢ TRẬN ĐẤU</span>
       <div class="abs row" style="left:60px;top:60px;gap:16px">${jd('XP GỐC', { h: 80, fill: 'var(--brown)', sw: 0, shadow: false })}${jd(': ' + S.xp, { h: 80, fill: 'var(--brown)', sw: 0, shadow: false })}</div>
@@ -169,12 +175,12 @@ SCREENS.summary = {
     QUESTS[0][2] = Math.min(QUESTS[0][3], QUESTS[0][2] + p.got + p.extras); QUESTS[3][2] = Math.min(QUESTS[3][3], QUESTS[3][2] + (p.jumps || 0)); if (p.win) QUESTS[1][2] = 1;
     let prog = (S.lvProg || 0) + gain, lvUp = false; while (prog >= xpNeed(S.level)) { prog -= xpNeed(S.level); S.level++; lvUp = true; } S.lvProg = prog; save();
     const cn = el.querySelector('#cn'), tx = el.querySelector('#tx'), tc = el.querySelector('#tc'); let i = 0; const steps = 24;
-    setTimeout(() => { const iv = setInterval(() => { i++; const k = i / steps; cn.innerHTML = jd(String(Math.round(earned * k)), { h: 190, sw: 9 }); tc.textContent = fmt(Math.round(S.coins - earned + earned * k)); if (i % 3 === 0) beep('coin');
-      if (i >= steps) { clearInterval(iv); el.querySelector('#bonus').innerHTML = jd(': +' + gain, { h: 80, fill: 'var(--green5)', sw: 0, shadow: false });
+    setTimeout(() => { const iv = setInterval(() => { i++; const k = i / steps; cn.innerHTML = jd(String(Math.round(earned * k)), { h: 190, sw: 9 }); if (i % 3 === 0) beep('tick');
+      if (i >= steps) { clearInterval(iv); const rc = rectOf(cn); burst(rc.cx, rc.cy, { n: 14, dist: 160 }); coinFly(rc.cx, rc.cy, earned, { n: 12 }); el.querySelector('#bonus').innerHTML = jd(': +' + gain, { h: 80, fill: 'var(--green5)', sw: 0, shadow: false });
         let j = 0; const iv2 = setInterval(() => { j++; tx.innerHTML = jd(': ' + Math.round(x0 + gain * j / 15), { h: 88, fill: 'var(--gold)', stroke: 'var(--textd)', sw: 7 }); if (j >= 15) { clearInterval(iv2); el.querySelector('#bar').style.width = (lvUp ? 100 : prog / xpNeed(S.level) * 100) + '%';
           if (lvUp) setTimeout(() => { if (cur !== 'summary') return; el.querySelector('#lv').innerHTML = jd(String(S.level), { h: 64, fill: 'var(--textd)', sw: 0, shadow: false }); el.querySelector('#bar').style.transition = 'none'; el.querySelector('#bar').style.width = prog / xpNeed(S.level) * 100 + '%'; el.querySelector('#lvl').textContent = `Lv.${S.level} → Lv.${S.level + 1}`; levelUp(); }, 1200); } }, 45); } }, 45); }, 600);
     on(el, '[data-home]', () => go('lobby')); on(el, '[data-again]', () => { WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true }; go('waiting'); }); }
 };
-function levelUp() { beep('win'); S.coins += 300; save(); const o = overlay({ title: 'CHÚC MỪNG', close: false, width: 760, body: `<div style="position:relative;width:180px;height:210px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--textd)" class="center"><div class="center" style="width:160px;height:190px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--gold)">${jd(String(S.level), { h: 90, fill: 'var(--textd)', sw: 0, shadow: false })}</div></div>
-  <div style="font-weight:900;font-size:64px;color:var(--red)">LÊN CẤP ${S.level}!</div><div style="font-weight:600;font-size:28px">Mở khoá khung avatar Tết + 300 xu</div>${btn('TUYỆT VỜI!', { color: 'green', icon: 'check', style: 'width:100%' })}` });
-  o.querySelector('.btn').onclick = () => { o.close(); refreshCoins(); document.querySelectorAll('#tc').forEach(e => e.textContent = fmt(S.coins)); }; }
+function levelUp() { beep('win'); S.coins += 300; save(); const o = overlay({ title: 'CHÚC MỪNG', close: false, width: 760, cls: 'reward', body: `<div class="rw-stage" style="height:250px"><div class="rays"></div><div class="glow"></div>${'<i class="tw"></i>'.repeat(6)}<div style="position:relative;width:180px;height:210px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--textd)" class="center"><div class="center" style="width:160px;height:190px;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%);background:var(--gold)">${jd(String(S.level), { h: 90, fill: 'var(--textd)', sw: 0, shadow: false })}</div></div></div>
+  <div class="rw-amt">LÊN CẤP ${S.level}!</div><div style="font-weight:600;font-size:28px">Mở khoá khung avatar Tết + 300 xu</div>${btn('TUYỆT VỜI!', { color: 'green', icon: 'check', style: 'width:100%' })}` });
+  confetti(o, 60); o.querySelector('.btn').onclick = () => { const r = rectOf(o.querySelector('.rw-stage')); o.close(); S.coins -= 300; setTimeout(() => { S.coins += 300; save(); coinFly(r.cx, r.cy, 300, { n: 10 }); }, 120); }; }
