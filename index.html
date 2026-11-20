@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mật Vụ Lô Tô</title>
+<meta name="description" content="Mật Vụ Lô Tô – game lô tô Tết: chọn con giáp, chạy quanh nhà ngoại lụm số và hô KINH!">
+<meta name="theme-color" content="#7A2A1E">
+<link rel="icon" href="assets/img/coin.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800;900&family=Russo+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="viewport"><div id="stage"><div id="overlays"></div><div id="toasts"></div></div></div>
+<script src="js/junkdog-data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/screens-menu.js"></script>
+<script src="js/screens-social.js"></script>
+<script src="js/screens-room.js"></script>
+<script src="js/game.js"></script>
+<script>
+  // preload images, then start
+  const pre = ['assets/img/world.jpg','assets/img/bg_kitchen.jpg','assets/img/pouch.webp','assets/img/coin.webp', ...CHARS.map(c => charImg(c[0]))];
+  pre.forEach(src => { const i = new Image(); i.src = src; });
+  const start = (location.hash || '').slice(1);
+  document.fonts.ready.finally(() => go(SCREENS[start] && ['lobby','character','shop','shopxu','leaderboard','quests','profile','friends','mail','settings','create','join','find'].includes(start) && S.logged ? start : 'splash', {}, { push: false }));
+</script>
+</body>
+</html>
