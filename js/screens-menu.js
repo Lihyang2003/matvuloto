@@ -65,11 +65,12 @@ SCREENS.tutorial = {
         `<img src="${IMG('trophy.webp')}" class="abs" style="left:160px;top:50px;width:320px">${[[27, 60], [86, 260], [45, 460]].map(([n, x]) => ball(n, 'abs').replace('class="ball abs', `style="left:${x}px;top:410px" class="ball abs`)).join('')}`][step]}</div>
       <div class="abs col" style="left:760px;top:90px;width:680px;gap:24px"><span class="tag or" style="align-self:flex-start;font-size:24px">BƯỚC ${step + 1} / 3</span>
         <div style="font-weight:900;font-size:52px;line-height:1.15">${TUT[step][0]}</div><div style="font-weight:600;font-size:30px;line-height:1.4">${TUT[step][1]}</div></div>
-      <div class="abs row" style="left:760px;top:580px;gap:14px">${[0, 1, 2].map(k => `<span style="width:${k === step ? 44 : 20}px;height:20px;border-radius:10px;border:3px solid var(--brown);background:${k === step ? 'var(--red)' : 'var(--cream2)'}"></span>`).join('')}</div>
+      <div class="abs row" style="left:50px;width:640px;top:652px;gap:14px;justify-content:center">${[0, 1, 2].map(k => `<span style="width:${k === step ? 44 : 20}px;height:20px;border-radius:10px;border:3px solid var(--brown);background:${k === step ? 'var(--red)' : 'var(--cream2)'}"></span>`).join('')}</div>
       <div class="abs row" style="right:50px;top:556px;gap:24px">${step > 0 ? btn('LÙI', { color: 'white', size: 'm', icon: 'chevron-left', attrs: 'data-prev' }) : ''}${btn(step === 2 ? 'BẮT ĐẦU CHƠI' : 'TIẾP', { color: step === 2 ? 'green' : 'red', size: 'm', icon: step === 2 ? 'play' : 'chevron-right', attrs: 'data-next' })}</div></div>`,
   mount(el, p) { const step = p.step || 0; const then = p.then || 'lobby';
-    on(el, '[data-skip]', () => go(then)); on(el, '[data-prev]', () => go('tutorial', { step: step - 1, then }, { push: false }));
-    on(el, '[data-next]', () => step < 2 ? go('tutorial', { step: step + 1, then }, { push: false }) : go(then)); }
+    const done = () => { const prev = hist[hist.length - 1]; if (prev && prev[0] === then) back(); else go(then); };  // came from `then` -> pop back to it, never stack a loop
+    on(el, '[data-skip]', done); on(el, '[data-prev]', () => go('tutorial', { step: step - 1, then }, { push: false }));
+    on(el, '[data-next]', () => step < 2 ? go('tutorial', { step: step + 1, then }, { push: false }) : done()); }
 };
 
 SCREENS.lobby = {
@@ -88,7 +89,7 @@ SCREENS.lobby = {
       <div class="row wiggle-slow" style="align-self:center;gap:16px;background:var(--red);border:5px solid var(--brown);border-radius:24px;padding:12px 26px 14px 16px;box-shadow:var(--hard-s);cursor:pointer" data-go="quests"><img src="${IMG('coin_chest.webp')}" width="80"><div class="col" style="color:var(--cream)"><b style="font-size:28px;font-weight:900">SỰ KIỆN TẾT</b><span style="font-weight:700;font-size:20px">Lụm 50 số – nhận Rương xu!</span></div></div></div>
     <div class="abs row panel" style="right:70px;bottom:60px;gap:22px;padding:18px 28px 20px;border-radius:36px">
       ${[['Nhân vật', 'character', `<img src="${charImg('chuot')}" width="72">`], ['Shop', 'shop', `<img src="${IMG('ao_dai_tet.webp')}" width="72">`], ['Nhiệm vụ', 'quests', `<img src="${IMG('li_xi.webp')}" width="72">`, questsReady()],
-        ['Xếp hạng', 'leaderboard', `<img src="${IMG('trophy.webp')}" width="72">`], ['Bạn bè', 'friends', ic('users', 'var(--brown)', 60)], ['Điểm danh', 'daily', `<img src="${IMG('gift.webp')}" width="72">`, S.daily < 7 && !S.claimedToday ? '!' : 0]]
+        ['Xếp hạng', 'leaderboard', `<img src="${IMG('trophy.webp')}" width="72">`], ['Bạn bè', 'friends', `<img src="${IMG('ban_be.webp')}" width="72">`], ['Điểm danh', 'daily', `<img src="${IMG('gift.webp')}" width="72">`, S.daily < 7 && !S.claimedToday ? '!' : 0]]
         .map(([n, g, art, b]) => `<div class="col center subcard" style="position:relative;width:118px;height:118px;background:var(--or3);border-width:4px;cursor:pointer;gap:2px" data-dock="${g}">${art}<span style="font-weight:800;font-size:18px">${n}</span>${b ? `<span class="dot-badge" style="top:-10px;right:-10px">${b}</span>` : ''}</div>`).join('')}</div>`,
   mount(el) { wireCommon(el); on(el, '[data-help]', () => go('tutorial', { step: 0, then: 'lobby' }));
     on(el, '[data-dock]', (e, d) => d.dataset.dock === 'daily' ? openDaily() : go(d.dataset.dock));

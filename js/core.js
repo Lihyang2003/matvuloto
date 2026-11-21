@@ -145,7 +145,7 @@ function build(name, params, enter) { const el = document.createElement('div'); 
 function go(name, params = {}, { push = true, fx = true } = {}) {
   if (name === cur && !push) { // in-place re-render: keep overlays (reward popups) alive
     SCREENS[cur].leave?.(); curParams = params; const old = stage.querySelector('.screen'); const el = build(name, params, false); old ? old.replaceWith(el) : stage.prepend(el); SCREENS[name].mount?.(el, params); return; }
-  closeAllOverlays(); if (cur) SCREENS[cur].leave?.(); if (push && cur) hist.push([cur, curParams]);
+  closeAllOverlays(); if (cur) SCREENS[cur].leave?.(); if (push && cur) hist.push([cur, curParams]); if (name === 'lobby') hist.length = 0;
   const prev = cur; cur = name; curParams = params;
   const swap = () => { const el = build(name, params, true); stage.querySelector('.screen')?.remove(); stage.prepend(el); SCREENS[name].mount?.(el, params); try { history.replaceState(null, '', '#' + name); } catch {} };
   if (!fx || !prev || REDUCED) return swap();
