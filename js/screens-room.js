@@ -13,8 +13,8 @@ SCREENS.create = {
     <div class="abs panel" style="left:1000px;top:226px;width:810px;padding:18px 26px 22px"><div class="sec-head"><div class="numbadge b" style="transform:scale(.8)">02</div>CÀI ĐẶT TRẬN ĐẤU</div>
       <div class="row" style="gap:18px;margin-top:14px;align-items:stretch">
         <div class="subcard col" style="flex:1;padding:16px 20px 22px;gap:16px;align-items:center;border-width:4px"><div class="row" style="gap:10px;width:100%">${ic('users', 'var(--brown)', 34)}<b style="flex:1;font-weight:800;font-size:22px">Số người chơi</b><span class="tag red" style="font-size:18px">${r.players} người</span></div>
-          <div class="row" style="gap:18px"><div class="iconbtn" data-pl="-1" style="width:58px;height:58px;background:var(--or5);${r.players <= 2 ? 'opacity:.4' : ''}">${ic('minus', 'var(--brown)', 30)}</div><div class="center" style="width:110px;height:62px;border-radius:14px;border:4px solid var(--brown);background:var(--cream);font-weight:900;font-size:36px">${r.players}</div><div class="iconbtn" data-pl="1" style="width:58px;height:58px;background:var(--or5);${r.players >= 16 ? 'opacity:.4' : ''}">${ic('plus', 'var(--brown)', 30)}</div></div>
-          <div class="row" style="gap:12px">${[4, 8, 12, 16].map(q => `<span class="chip ${q === r.players ? 'on' : ''}" data-plq="${q}">${q}</span>`).join('')}</div></div>
+          <div class="row" style="gap:18px"><div class="iconbtn" data-pl="-1" style="width:58px;height:58px;background:var(--or5);${r.players <= 4 ? 'opacity:.4' : ''}">${ic('minus', 'var(--brown)', 30)}</div><div class="center" style="width:110px;height:62px;border-radius:14px;border:4px solid var(--brown);background:var(--cream);font-weight:900;font-size:36px">${r.players}</div><div class="iconbtn" data-pl="1" style="width:58px;height:58px;background:var(--or5);${r.players >= 12 ? 'opacity:.4' : ''}">${ic('plus', 'var(--brown)', 30)}</div></div>
+          <div class="row" style="gap:12px">${[4, 6, 8, 12].map(q => `<span class="chip ${q === r.players ? 'on' : ''}" data-plq="${q}">${q}</span>`).join('')}</div></div>
         <div class="subcard col" style="flex:1;padding:16px 20px 22px;gap:12px;align-items:center;border-width:4px"><div class="row" style="gap:10px;width:100%">${ic('clock', 'var(--brown)', 34)}<b style="flex:1;font-weight:800;font-size:22px">Nhiệm vụ chung</b><span class="tag blue" style="font-size:18px">${r.time === 0 ? 'Random' : r.time + ' phút'}</span></div>
           <span style="font-weight:700;font-size:20px;color:var(--brown5)">Thời gian ra nhiệm vụ chung</span><div class="row" style="gap:12px;flex-wrap:wrap;justify-content:center">${[2, 4, 6, 0].map(t => `<span class="chip ${t === r.time ? 'onb' : ''}" data-time="${t}">${t ? t + ' phút' : 'Random'}</span>`).join('')}</div></div></div></div>
     <div class="abs row" style="left:1000px;top:676px;gap:24px">
@@ -25,7 +25,7 @@ SCREENS.create = {
     <div class="abs" style="left:1105px;top:946px">${btn('TẠO PHÒNG', { attrs: 'data-create', style: 'width:600px' })}</div>`; },
   mount(el) { wireCommon(el); el.querySelector('[data-rand]')?.classList.add('nodash'); const re = () => go('create', {}, { push: false }); ROOM.host = true;
     on(el, '[data-map]', (e, d) => { ROOM.map = +d.dataset.map; re(); }); on(el, '[data-rand]', () => { ROOM.map = (ROOM.map + 1 + Math.floor(Math.random() * 2)) % 3; re(); });
-    on(el, '[data-pl]', (e, d) => { ROOM.players = Math.max(2, Math.min(16, ROOM.players + +d.dataset.pl)); re(); }); on(el, '[data-plq]', (e, d) => { ROOM.players = +d.dataset.plq; re(); });
+    on(el, '[data-pl]', (e, d) => { const nv = ROOM.players + +d.dataset.pl; if (nv < 4 || nv > 12) { shake(d, 8); return toast(nv < 4 ? 'Phòng tối thiểu 4 người chơi' : 'Phòng tối đa 12 người chơi', 'bad', 'users'); } ROOM.players = nv; beep('tick'); re(); }); on(el, '[data-plq]', (e, d) => { ROOM.players = +d.dataset.plq; beep('tick'); re(); });
     on(el, '[data-time]', (e, d) => { ROOM.time = +d.dataset.time; re(); }); on(el, '[data-priv]', (e, d) => { ROOM.priv = d.dataset.priv === 'true'; re(); });
     on(el, '[data-copy]', () => { try { navigator.clipboard.writeText(ROOM.code); } catch {} toast('Đã sao chép mã phòng ' + ROOM.code, 'ok', 'copy'); });
     on(el, '[data-host]', () => toast('Bạn là chủ phòng – có thể đổi mọi cài đặt', 'info', 'crown'));
@@ -49,48 +49,53 @@ SCREENS.join = {
     addEventListener('keydown', kh); }
 };
 
-const ROOMS = [['Hội Lô Tô Xóm Chợ', 0, 'chuot', 5, 'Nhà của ngoại', '4 phút', false], ['Tết này ai KINH?', 1, 'rong', 7, 'Cống sông quê', '2 phút', true], ['Phòng của Hổ con', 2, 'ho', 8, 'Miệt vườn', '6 phút', false],
-  ['Mèo lười lụm số', 0, 'meo', 3, 'Nhà của ngoại', 'Random', false], ['Khỉ nhảy cao', 2, 'khi', 6, 'Miệt vườn', '4 phút', true], ['Heo ăn Tết', 1, 'heo', 8, 'Cống sông quê', '2 phút', false]];
+// [name, map, host, players, mapName, time, hasFriends, capacity(4..12)]
+const ROOMS = [['Hội Lô Tô Xóm Chợ', 0, 'chuot', 5, 'Nhà của ngoại', '4 phút', false, 6], ['Tết này ai KINH?', 1, 'rong', 7, 'Cống sông quê', '2 phút', true, 8], ['Phòng của Hổ con', 2, 'ho', 8, 'Miệt vườn', '6 phút', false, 8],
+  ['Mèo lười lụm số', 0, 'meo', 3, 'Nhà của ngoại', 'Random', false, 4], ['Khỉ nhảy cao', 2, 'khi', 6, 'Miệt vườn', '4 phút', true, 12], ['Heo ăn Tết', 1, 'heo', 12, 'Cống sông quê', '2 phút', false, 12]];
 SCREENS.find = {
-  html: ({ filter = 'Tất cả', q = '' }) => { let list = ROOMS.map((r, i) => [...r, i]); if (filter === 'Còn chỗ') list = list.filter(r => r[3] < 8); if (filter === 'Có bạn bè') list = list.filter(r => r[6]); if (q) list = list.filter(r => r[0].toLowerCase().includes(q.toLowerCase()));
+  html: ({ filter = 'Tất cả', q = '' }) => { let list = ROOMS.map((r, i) => [...r, i]); if (filter === 'Còn chỗ') list = list.filter(r => r[3] < r[7]); if (filter === 'Có bạn bè') list = list.filter(r => r[6]); if (q) list = list.filter(r => r[0].toLowerCase().includes(q.toLowerCase()));
     return `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('TÌM PHÒNG', 'red', 'Phòng công khai đang mở')}
     <div class="abs row" style="left:110px;top:232px;gap:20px"><div class="row" style="width:560px;height:76px;padding:0 24px;gap:14px;border-radius:999px;border:5px solid var(--brown);background:#fff">${ic('search', 'var(--brown5)', 34)}<input id="q" value="${q}" placeholder="Tìm theo tên phòng..." style="flex:1;border:none;outline:none;font-size:24px;font-weight:700;color:var(--textd);background:none"></div>
       ${['Tất cả', 'Còn chỗ', 'Có bạn bè'].map(f => `<span class="chip ${f === filter ? 'on' : ''}" data-f="${f}" style="font-size:24px;font-weight:800;padding:10px 26px 12px;border-width:4px">${f}</span>`).join('')}
       <div class="iconbtn" data-refresh style="width:76px;height:76px;background:var(--or5)">${ic('refresh', 'var(--brown)', 38)}</div></div>
-    <div class="abs" style="left:110px;top:340px;width:1700px;display:flex;flex-wrap:wrap;gap:26px 30px">${list.length ? list.map(([n, m, h, c, mp, tm, fr, i]) => `<div class="row panel" data-room="${i}" style="width:835px;gap:20px;padding:16px 20px 16px 16px;border-radius:28px;border-width:5px;box-shadow:var(--hard-s);cursor:pointer;${c >= 8 ? 'opacity:.8' : ''}">
+    <div class="abs" style="left:110px;top:340px;width:1700px;display:flex;flex-wrap:wrap;gap:26px 30px">${list.length ? list.map(([n, m, h, c, mp, tm, fr, cap, i]) => `<div class="row panel" data-room="${i}" style="width:835px;gap:20px;padding:16px 20px 16px 16px;border-radius:28px;border-width:5px;box-shadow:var(--hard-s);cursor:pointer;${c >= cap ? 'opacity:.8' : ''}">
       <img src="${IMG(MAPS[m][1])}" style="width:190px;height:120px;object-fit:cover;border-radius:16px;border:4px solid var(--brown)"><div class="col" style="flex:1;gap:8px"><b style="font-weight:800;font-size:28px">${n}</b><div class="row" style="gap:10px"><img src="${charImg(h)}" width="40" height="40" style="border-radius:50%;border:3px solid var(--brown);background:var(--or5);object-fit:contain">
-      <span class="tag ${c >= 8 ? 'red' : 'green'}" style="font-size:18px">${c}/8 người</span><span class="tag cream" style="font-size:18px">${tm}</span>${fr ? '<span class="tag blue" style="font-size:18px">Có bạn bè</span>' : ''}</div></div>${btn(c >= 8 ? 'ĐẦY' : 'VÀO', { color: c >= 8 ? 'white' : 'green', size: 'm' })}</div>`).join('') : '<div class="panel" style="padding:40px;font-weight:800;font-size:30px">Không có phòng phù hợp – thử bộ lọc khác nhé!</div>'}</div>`; },
+      <span class="tag ${c >= cap ? 'red' : 'green'}" style="font-size:18px">${c}/${cap} người</span><span class="tag cream" style="font-size:18px">${tm}</span>${fr ? '<span class="tag blue" style="font-size:18px">Có bạn bè</span>' : ''}</div></div>${btn(c >= cap ? 'ĐẦY' : 'VÀO', { color: c >= cap ? 'white' : 'green', size: 'm' })}</div>`).join('') : '<div class="panel" style="padding:40px;font-weight:800;font-size:30px">Không có phòng phù hợp – thử bộ lọc khác nhé!</div>'}</div>`; },
   mount(el, p) { wireCommon(el);
     on(el, '[data-f]', (e, d) => go('find', { filter: d.dataset.f, q: p.q || '' }, { push: false }));
     const qi = el.querySelector('#q'); qi.onchange = () => go('find', { filter: p.filter || 'Tất cả', q: qi.value }, { push: false });
-    on(el, '[data-refresh]', () => { ROOMS.forEach(r => { if (r[3] < 8 || Math.random() < .3) r[3] = Math.max(2, Math.min(8, r[3] + Math.round(Math.random() * 2 - 1))); }); toast('Đã làm mới danh sách phòng', 'ok', 'refresh'); go('find', p, { push: false }); });
-    on(el, '[data-room]', (e, d) => { const [n, m, h, c, mp, tm] = ROOMS[+d.dataset.room]; if (c >= 8) return toast('Phòng này đã đủ người – thử phòng khác nhé!', 'bad');
-      ROOM = { host: false, name: n, code: randCode(), map: m, players: 8, time: parseInt(tm) || 0, priv: false, hostChar: h }; go('waiting'); }); }
+    on(el, '[data-refresh]', () => { ROOMS.forEach(r => { if (r[3] < r[7] || Math.random() < .3) r[3] = Math.max(2, Math.min(r[7], r[3] + Math.round(Math.random() * 2 - 1))); }); toast('Đã làm mới danh sách phòng', 'ok', 'refresh'); go('find', p, { push: false }); });
+    on(el, '[data-room]', (e, d) => { const [n, m, h, c, mp, tm, fr, cap] = ROOMS[+d.dataset.room]; if (c >= cap) return toast('Phòng này đã đủ người – thử phòng khác nhé!', 'bad');
+      ROOM = { host: false, name: n, code: randCode(), map: m, players: cap, filled: c + 1, time: parseInt(tm) || 0, priv: false, hostChar: h }; go('waiting'); }); }
 };
 
 SCREENS.waiting = {
   html: () => { const r = ROOM; const me = ['me', S.char, S.name.split(' ').slice(-2).join(' '), r.host];
-    const others = [['chuot', 'Chuột chít', !r.host && !r.hostChar], ['rong', 'Rồng vàng'], ['khi', 'Khỉ lém'], ['ho', 'Hổ con'], ['meo', 'Mèo mướp'], ['cho', 'Cún nhà']];
-    if (r.hostChar) others[0] = [r.hostChar, 'Chủ phòng', true];
+    // N seats: Đỏ gets ceil(N/2), Xanh floor(N/2). F players are in (default N-1 -> one free seat to invite)
+    const N = r.players, F = Math.min(N, r.filled || N - 1), mT = Math.ceil(N / 2), kT = Math.floor(N / 2);
+    const redPool = [me, ['chuot', 'Chuột chít', !r.host && !r.hostChar], ['rong', 'Rồng vàng'], ['khi', 'Khỉ lém'], ['ngua', 'Ngựa ô'], ['heo', 'Heo ủn']];
+    const bluePool = [['ho', 'Hổ con'], ['meo', 'Mèo mướp'], ['cho', 'Cún nhà'], ['ga', 'Gà gáy'], ['trau', 'Trâu vàng'], ['ran', 'Rắn lục']];
+    if (r.hostChar) redPool[1] = [r.hostChar, 'Chủ phòng', true];
+    const b0 = Math.min(kT - 1, Math.floor(F / 2)), nR = Math.min(mT, F - b0), nB = F - nR;
     const ready = WAIT_READY;
-    const card = (p, team) => { if (!p) return `<div class="center" data-invite style="width:368px;height:200px;border-radius:24px;border:4px dashed var(--brown5);background:var(--cream);gap:12px;cursor:pointer;font-weight:800;font-size:26px;color:var(--brown5)">${ic('plus', 'var(--brown5)', 44)}Mời bạn bè</div>`;
+    const card = (p, team) => { if (!p) return `<div class="center" data-invite style="width:368px;height:136px;border-radius:22px;border:4px dashed var(--brown5);background:var(--cream);gap:12px;cursor:pointer;font-weight:800;font-size:24px;color:var(--brown5)">${ic('plus', 'var(--brown5)', 38)}Mời bạn bè</div>`;
       const isMe = p[0] === 'me'; const [k, n, host] = isMe ? [p[1], p[2], p[3]] : p; const rd = isMe ? ready.me : ready[n];
-      return `<div class="row" ${isMe ? '' : `data-player="${n}"`} style="width:368px;height:200px;padding:12px 16px 12px 12px;gap:14px;border-radius:24px;cursor:pointer;background:var(--cream2);border:${rd ? 5 : 4}px solid ${rd ? (team ? 'var(--lgreen)' : 'var(--lred)') : 'var(--brown)'}">
-        <div style="width:160px;height:160px;border-radius:20px;border:3px solid var(--brown);background:var(--or3) url(${charImg(k)}) center/contain no-repeat;flex:none"></div>
-        <div class="col" style="gap:8px;min-width:0"><b style="font-weight:800;font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</b><span class="tag ${rd ? 'green' : 'cream'}" style="font-size:16px;align-self:flex-start">${rd ? '✓ Sẵn sàng' : 'Đang chọn đồ…'}</span>
-          ${isMe ? '<span class="tag blue" style="font-size:15px;align-self:flex-start">BẠN</span>' : ''}${host ? '<span class="tag gold" style="font-size:15px;align-self:flex-start">👑 CHỦ PHÒNG</span>' : ''}</div></div>`; };
-    const red = [me, others[0], others[1], others[2]], green = [others[3], others[4], others[5], null];
+      return `<div class="row" ${isMe ? '' : `data-player="${n}"`} style="width:368px;height:136px;padding:10px 14px 10px 10px;gap:14px;border-radius:22px;cursor:pointer;background:var(--cream2);border:${rd ? 5 : 4}px solid ${rd ? (team ? 'var(--lgreen)' : 'var(--lred)') : 'var(--brown)'}">
+        <div style="width:112px;height:112px;border-radius:18px;border:3px solid var(--brown);background:var(--or3) url(${charImg(k)}) center/contain no-repeat;flex:none"></div>
+        <div class="col" style="gap:6px;min-width:0"><div class="row" style="gap:8px;min-width:0"><b style="font-weight:800;font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</b>${isMe ? '<span class="tag blue" style="font-size:14px;flex:none">BẠN</span>' : ''}</div><span class="tag ${rd ? 'green' : 'cream'}" style="font-size:16px;align-self:flex-start">${rd ? '✓ Sẵn sàng' : 'Đang chọn đồ…'}</span>
+          ${host ? '<span class="tag gold" style="font-size:14px;align-self:flex-start">👑 CHỦ PHÒNG</span>' : ''}</div></div>`; };
+    const red = [...redPool.slice(0, nR), ...Array(mT - nR).fill(null)], green = [...bluePool.slice(0, nB), ...Array(kT - nB).fill(null)];
     return `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn('RỜI PHÒNG', 'left', 'data-leave')}</div>${banner('PHÒNG CHỜ', 'red', (r.host ? 'Phòng của bạn' : r.name) + ' · Mã ' + r.code)}
-    <div class="abs pill" style="right:110px;top:70px;padding:10px 24px 12px 18px">${ic('map', 'var(--brown)', 30)}<span style="font-weight:800;font-size:22px">${MAPS[r.map][0]} · 7/${r.players} người · ${r.time ? r.time + ' phút' : 'Random'}</span></div>
-    ${[['ĐỎ', 'var(--lred)', red, 0, 110], ['XANH', 'var(--lgreen)', green, 1, 990]].map(([t, c, list, ti, x]) => `<div class="abs panel" style="left:${x}px;top:232px;width:820px;padding:22px 26px 26px">
-      <div class="row" style="gap:14px;margin-bottom:18px"><span class="tag" style="background:${c};color:#fff;font-size:30px;font-weight:900;padding:6px 22px 8px;border-width:4px">ĐỘI ${t}</span><b style="font-weight:800;font-size:26px;color:var(--brown5)">${list.filter(Boolean).length}/4</b></div>
+    <div class="abs pill" style="right:110px;top:70px;padding:10px 24px 12px 18px">${ic('map', 'var(--brown)', 30)}<span style="font-weight:800;font-size:22px">${MAPS[r.map][0]} · ${F}/${N} người · ${r.time ? r.time + ' phút' : 'Random'}</span></div>
+    ${[['ĐỎ', 'var(--lred)', red, 0, 110], ['XANH', 'var(--lgreen)', green, 1, 990]].map(([t, c, list, ti, x]) => `<div class="abs panel" style="left:${x}px;top:232px;width:820px;height:590px;padding:22px 26px 26px">
+      <div class="row" style="gap:14px;margin-bottom:18px"><span class="tag" style="background:${c};color:#fff;font-size:30px;font-weight:900;padding:6px 22px 8px;border-width:4px">ĐỘI ${t}</span><b style="font-weight:800;font-size:26px;color:var(--brown5)">${list.filter(Boolean).length}/${list.length}</b></div>
       <div style="display:grid;grid-template-columns:368px 368px;gap:16px">${list.map(p => card(p, ti)).join('')}</div></div>`).join('')}
     <div class="abs row" style="left:0;right:0;top:880px;justify-content:center;gap:22px">${btn('ĐỔI NHÂN VẬT', { color: 'white', size: 'm', icon: 'refresh', attrs: 'data-go="character"' })}${btn('CHAT', { color: 'yellow', size: 'm', icon: 'message', attrs: 'data-chat' })}${btn('MỜI', { color: 'blue', size: 'm', icon: 'plus', attrs: 'data-invite' })}
       ${btn(ready.me ? 'ĐÃ SẴN SÀNG' : 'SẴN SÀNG?', { color: ready.me ? 'lgreen' : 'yellow', size: 'm', icon: ready.me ? 'check' : 'clock', attrs: 'data-ready' })}
       ${r.host ? btn('BẮT ĐẦU', { size: 'm', icon: 'play', attrs: 'data-start' }) : btn(ready.me ? 'ĐANG CHỜ CHỦ PHÒNG…' : 'CHỜ CHỦ PHÒNG', { color: 'white', size: 'm', icon: 'clock', attrs: 'data-wait' })}</div>`; },
   mount(el) { wireCommon(el); clearTimeout(WAIT_T);
-    WAIT_T = setTimeout(function tick() { if (cur !== 'waiting') return; const k = ['Khỉ lém', 'Cún nhà', 'Chuột chít'].find(n => !WAIT_READY[n]); if (k) { WAIT_READY[k] = true; go('waiting', {}, { push: false }); } }, 2200);
-    on(el, '[data-leave]', () => confirmBox({ title: 'RỜI PHÒNG?', text: 'Bạn có chắc muốn rời phòng?\nĐội Đỏ sẽ thiếu một mật vụ đó!', no: 'Ở LẠI', yes: 'RỜI PHÒNG', onYes: () => { WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true }; go('lobby'); } }));
+    WAIT_T = setTimeout(function tick() { if (cur !== 'waiting') return; const k = ['Khỉ lém', 'Cún nhà', 'Heo ủn', 'Chuột chít'].find(n => !WAIT_READY[n]); if (k) { WAIT_READY[k] = true; go('waiting', {}, { push: false }); } }, 2200);
+    on(el, '[data-leave]', () => confirmBox({ title: 'RỜI PHÒNG?', text: 'Bạn có chắc muốn rời phòng?\nĐội Đỏ sẽ thiếu một mật vụ đó!', no: 'Ở LẠI', yes: 'RỜI PHÒNG', onYes: () => { WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true, 'Ngựa ô': true, 'Gà gáy': true, 'Trâu vàng': true, 'Rắn lục': true }; go('lobby'); } }));
     on(el, '[data-player]', (e, d) => toast('Đã gửi lời mời kết bạn tới ' + d.dataset.player, 'ok', 'users'));
     on(el, '[data-ready]', () => { WAIT_READY.me = !WAIT_READY.me; go('waiting', {}, { push: false }); if (!ROOM.host && WAIT_READY.me) setTimeout(() => { if (cur === 'waiting' && WAIT_READY.me) { toast('Chủ phòng đã bắt đầu trận!', 'info', 'play'); setTimeout(() => cur === 'waiting' && go('countdown'), 900); } }, 2500); });
     on(el, '[data-wait]', () => toast(WAIT_READY.me ? 'Chủ phòng sắp bắt đầu…' : 'Bấm SẴN SÀNG để báo chủ phòng nhé!', 'info', 'clock'));
@@ -100,7 +105,7 @@ SCREENS.waiting = {
       on(o, '[data-msg]', (e, d) => { o.close(); toast('Bạn: ' + d.dataset.msg, 'info', 'message'); setTimeout(() => cur === 'waiting' && toast('Rồng vàng: Chơi thôi! 🐉', 'info', 'message'), 1400); }); });
     on(el, '[data-invite]', () => { const o = overlay({ title: 'MỜI BẠN', color: 'blue', width: 920, body: `<b style="font-weight:800;font-size:26px;color:var(--brown5)">Bạn bè đang online</b>${FRIENDS.slice(0, 5).map(f => friendRow(f, 820)).join('')}` }); wireInvites(o); }); }
 };
-let WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true }; let WAIT_T = 0;
+let WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true, 'Ngựa ô': true, 'Gà gáy': true, 'Trâu vàng': true, 'Rắn lục': true }; let WAIT_T = 0;
 
 SCREENS.countdown = {
   html: () => `<div class="abs" style="inset:0;background:url(${IMG('bg_kitchen.jpg')}) center/cover"></div><div class="abs" style="inset:0;background:rgba(31,10,5,.5)"></div>
