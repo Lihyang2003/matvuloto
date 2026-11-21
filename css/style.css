@@ -104,9 +104,13 @@ input{font-family:inherit}
 .link{color:var(--blue);font-weight:800;text-decoration:underline;cursor:pointer}
 
 /* switches / segmented */
-.switch{width:120px;height:64px;border-radius:32px;border:5px solid var(--brown);background:#E8CFA6;position:relative;cursor:pointer;transition:background .2s;box-shadow:inset 0 4px 0 rgba(90,28,19,.15)}
-.switch::after{content:'';position:absolute;top:2px;left:2px;width:50px;height:50px;border-radius:50%;background:#fff;border:4px solid var(--brown);box-shadow:0 3px 0 rgba(90,28,19,.25);transition:left .22s cubic-bezier(.3,1.5,.5,1)}
-.switch.on{background:var(--green5)} .switch.on::after{left:58px}
+/* toggle: 124x62 track (4px border -> 116x54 inside), 44px knob centred with a 5px gap, TẮT/BẬT label in the free side */
+.switch{width:124px;height:62px;flex:none;border-radius:31px;border:4px solid var(--brown);background:#E6CDA4;position:relative;cursor:pointer;box-shadow:inset 0 3px 0 rgba(90,28,19,.16);transition:background-color .25s ease}
+.switch::after{content:'';position:absolute;top:5px;left:5px;width:44px;height:44px;border-radius:22px;background:#fff;border:3px solid var(--brown);box-shadow:0 3px 0 rgba(90,28,19,.28);transition:left .26s cubic-bezier(.3,1.4,.5,1),width .15s ease}
+.switch::before{content:'TẮT';position:absolute;right:13px;top:50%;transform:translateY(-46%);font-weight:900;font-size:17px;letter-spacing:.02em;color:rgba(90,28,19,.5);transition:opacity .2s}
+.switch.on{background:var(--green5)} .switch.on::after{left:67px}
+.switch.on::before{content:'BẬT';right:auto;left:15px;color:#fff}
+.switch:active::after{width:52px} .switch.on:active::after{left:59px}
 .seg{display:inline-flex;padding:6px;border:4px solid var(--brown);border-radius:999px;background:var(--cream2)}
 .seg span{padding:8px 24px 10px;border-radius:999px;font-weight:800;font-size:22px;cursor:pointer}
 .seg span.on{background:var(--or5);outline:3px solid var(--brown)}
