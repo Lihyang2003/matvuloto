@@ -228,7 +228,7 @@ const needOf = t => Math.ceil(G.T[t].size / 2);
 function ctxHTML(c) { const sb = (l, o) => btn(l, { size: 's', ...o });
   if (c.type === 'st' && c.s.kind === 'solo') { const cd = G.myCool[c.s.id] || 0, no = nonOwn(G.me);
     return [`<div class="ci">${c.s.ico}</div><div class="ct"><b>${c.s.name}</b><span>Nhiệm vụ đơn · ${cd ? 'hồi lại sau ' + mmss(cd) : 'làm xong nhận 1 số'}</span></div>`
-      + sb('LÀM NHIỆM VỤ', { color: cd ? 'white' : 'green', icon: 'play', attrs: `data-cx="do" ${cd ? 'disabled' : ''}` }) + sb('LỤC TÌM', { color: 'yellow', icon: 'search', attrs: 'data-cx="search"' })
+      + sb('LÀM NHIỆM VỤ', { color: cd ? 'white' : 'green', icon: 'play', attrs: `data-cx="do" ${cd ? 'disabled' : ''}` }) + sb('TÌM SỐ GIẤU', { color: 'yellow', icon: 'search', attrs: 'data-cx="search"' })
       + (no ? sb('GIẤU SỐ', { color: 'blue', icon: 'eye-off', attrs: 'data-cx="bag"' }) : ''), `s${c.s.id}${Math.ceil(cd)}${no}`]; }
   if (c.type === 'st') { const k = teamAt(G.myTeam, c.s), need = needOf(G.myTeam), ok = k >= need, cd = c.s.cool;
     return [`<div class="ci" style="background:#bcd0f5">${c.s.ico}</div><div class="ct"><b>${c.s.name} · NV CHUNG</b><span>Cần ít nhất ${need} người cùng đội có mặt</span></div><div class="cnt ${ok ? 'ok' : ''}">${k}/${need}</div>`
@@ -369,7 +369,7 @@ function openCaller(n) { beep('call');
     <span class="tag red" style="font-size:28px;padding:8px 24px 10px">SỐ ${n} THUỘC DÃY CỦA ĐỘI ĐỐI THỦ</span><div class="rw-txt">🤫 Chỉ mình bạn nghe được! Gặp số này thì đem giấu, hoặc lừa đối thủ khỏi nó.</div>
     ${btn('ĐÃ NHỚ!', { color: 'green', icon: 'check', attrs: 'data-ok', style: 'width:100%' })}` });
   on(o, '[data-ok]', () => o.close()); }
-function openSearch(s) { const o = overlay({ title: 'LỤC TÌM', width: 820, body: `<div class="mg-stage" style="height:220px"><div class="mg-fire" style="animation:wigs .35s infinite">🔍</div></div><div id="srt" style="font-weight:800;font-size:28px;text-align:center">Đang lục quanh chỗ ${s.name.toLowerCase()}…</div>` });
+function openSearch(s) { const o = overlay({ title: 'TÌM SỐ BỊ GIẤU', width: 820, body: `<div class="mg-stage" style="height:220px"><div class="mg-fire" style="animation:wigs .35s infinite">🔍</div></div><div id="srt" style="font-weight:800;font-size:28px;text-align:center">Đang lục quanh chỗ ${s.name.toLowerCase()}…</div>` });
   setTimeout(() => { if (!o.isConnected) return; const found = [], left = [];
     for (const n of [...s.hidden]) { if (G.N[n].team !== G.myTeam && nonOwn(G.me) >= 2) { left.push(n); continue; } s.hidden.splice(s.hidden.indexOf(n), 1); giveNumber(G.me, n); found.push(n); }
     o.querySelector('#srt').innerHTML = found.length ? `<div class="col center" style="gap:14px">Tìm thấy số bị giấu!<div class="row" style="gap:14px">${found.map(n => ball(n, 'sm')).join('')}</div><span style="font-size:22px;color:var(--brown5)">${found.map(n => `${n}: ${G.N[n].team === G.myTeam ? 'của đội bạn' : 'số lạ'}`).join(' · ')}</span></div>` : (left.length ? 'Có số giấu ở đây nhưng túi đã đủ 2 số lạ!' : 'Không thấy số nào được giấu ở đây.');
