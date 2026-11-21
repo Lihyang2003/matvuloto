@@ -3,7 +3,7 @@ SCREENS.splash = {
   html: () => `${bgOnb()}<div class="abs center stamp" style="left:0;right:0;top:150px">${logo(1)}</div>
     <div class="abs" style="left:510px;top:700px;width:900px;height:56px;border-radius:28px;background:var(--cream);border:6px solid var(--brown);overflow:hidden"><div id="lb" class="shimmer" style="height:100%;width:0;background:var(--red);border-radius:28px;transition:width .3s ease-out"></div></div>
     <div id="lt" class="abs" style="left:0;right:0;top:780px;text-align:center;font-weight:800;font-size:30px">Đang tải bản đồ nhà ngoại...</div>
-    <div class="abs" style="left:0;right:0;top:840px;text-align:center;font-weight:600;font-size:24px;color:var(--brown5)">Mẹo: đứng lên quả lô tô đang sáng rồi bấm LỤM để cho vào túi!</div>`,
+    <div class="abs" style="left:0;right:0;top:840px;text-align:center;font-weight:600;font-size:24px;color:var(--brown5)">Mẹo: làm nhiệm vụ ở các chấm vàng để nhận số – số lạ thì nhớ đem giấu trong 60 giây!</div>`,
   mount(el) { const t0 = performance.now(); let ready = false; const lb = el.querySelector('#lb');
     const next = () => { if (cur === 'splash') go(S.logged ? 'lobby' : 'onboard', {}, { push: false }); };
     const iv = setInterval(() => { const p = window.PRE ? PRE.n / PRE.total : 1; const tp = Math.min(1, (performance.now() - t0) / 1400); lb.style.width = Math.round(Math.min(p, tp) * 100) + '%';
@@ -53,9 +53,9 @@ SCREENS.register = {
       S.name = n; S.logged = true; S.guest = false; save(); toast('Tạo tài khoản thành công!'); go('tutorial', { step: 0, then: 'lobby' }); }); }
 };
 
-const TUT = [['CHỌN NHÂN VẬT & VÀO PHÒNG', 'Chọn 1 trong 12 con giáp, mặc đồ Tết thật xịn, rồi tạo phòng hoặc vào phòng của bạn bè bằng mã.'],
-  ['DI CHUYỂN & LỤM SỐ', 'Dùng joystick (hoặc phím mũi tên / WASD) để đi quanh nhà ngoại. Số trên vé của bạn được gọi thì quả lô tô sẽ rơi xuống sàn – chạy tới và bấm LỤM (phím E)!'],
-  ['ĐỦ SỐ LÀ KINH!', 'Lụm đủ 5 số trên vé trước Đội Xanh rồi bấm KINH! Hết giờ hoặc đội bạn đủ số trước là thua.']];
+const TUT = [['HAI ĐỘI BÍ MẬT', 'Mỗi trận chia làm 2 đội bí mật. Tờ VÉ của bạn có gợi ý dãy 5 số của đội và ÁM HIỆU (vd: nhảy 2 lần) để nhận ra đồng đội. Không ai biết ai cùng phe!'],
+  ['LÀM NHIỆM VỤ – NHẬN SỐ', 'Đi tới các chấm vàng để làm nhiệm vụ và nhận 1 số. Số của đội thì mang về KHO; số lạ thì đem GIẤU ở trạm nhiệm vụ trong 60 giây, không thì số sẽ rơi! Tường thì phải đi vòng, bậc thềm thì phải NHẢY.'],
+  ['CẤT ĐỦ 5 SỐ LÀ KINH!', 'Cất đủ 5 số của đội vào kho trước đối thủ. Đội nào có 4 số sẽ bị cảnh báo RÌNH! Ra Sân trước khi có nhiệm vụ chung để nghe quản trò hô số.']];
 SCREENS.tutorial = {
   html: ({ step = 0 }) => `${bgGame()}${banner('HƯỚNG DẪN', 'blue')}<div class="abs" style="right:110px;top:60px">${navbtn('BỎ QUA', 'right', 'data-skip')}</div>
     <div class="abs panel" style="left:210px;top:230px;width:1500px;height:700px">

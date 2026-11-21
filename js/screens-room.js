@@ -71,32 +71,31 @@ SCREENS.find = {
 
 SCREENS.waiting = {
   html: () => { const r = ROOM; const me = ['me', S.char, S.name.split(' ').slice(-2).join(' '), r.host];
-    // N seats: Đỏ gets ceil(N/2), Xanh floor(N/2). F players are in (default N-1 -> one free seat to invite)
-    const N = r.players, F = Math.min(N, r.filled || N - 1), mT = Math.ceil(N / 2), kT = Math.floor(N / 2);
-    const redPool = [me, ['chuot', 'Chuột chít', !r.host && !r.hostChar], ['rong', 'Rồng vàng'], ['khi', 'Khỉ lém'], ['ngua', 'Ngựa ô'], ['heo', 'Heo ủn']];
-    const bluePool = [['ho', 'Hổ con'], ['meo', 'Mèo mướp'], ['cho', 'Cún nhà'], ['ga', 'Gà gáy'], ['trau', 'Trâu vàng'], ['ran', 'Rắn lục']];
-    if (r.hostChar) redPool[1] = [r.hostChar, 'Chủ phòng', true];
-    const b0 = Math.min(kT - 1, Math.floor(F / 2)), nR = Math.min(mT, F - b0), nB = F - nR;
+    // N seats, F players in (default N-1 -> one free seat to invite). Teams are NOT shown: they are split secretly when the match starts
+    const N = r.players, F = Math.min(N, r.filled || N - 1);
+    const pool = [me, ['chuot', 'Chuột chít', !r.host && !r.hostChar], ['rong', 'Rồng vàng'], ['khi', 'Khỉ lém'], ['ngua', 'Ngựa ô'], ['heo', 'Heo ủn'], ['ho', 'Hổ con'], ['meo', 'Mèo mướp'], ['cho', 'Cún nhà'], ['ga', 'Gà gáy'], ['trau', 'Trâu vàng'], ['ran', 'Rắn lục']];
+    if (r.hostChar) pool[1] = [r.hostChar, 'Chủ phòng', true];
     const ready = WAIT_READY;
-    const card = (p, team) => { if (!p) return `<div class="center" data-invite style="width:368px;height:136px;border-radius:22px;border:4px dashed var(--brown5);background:var(--cream);gap:12px;cursor:pointer;font-weight:800;font-size:24px;color:var(--brown5)">${ic('plus', 'var(--brown5)', 38)}Mời bạn bè</div>`;
+    const card = p => { if (!p) return `<div class="center" data-invite style="width:388px;height:136px;border-radius:22px;border:4px dashed var(--brown5);background:var(--cream);gap:12px;cursor:pointer;font-weight:800;font-size:24px;color:var(--brown5)">${ic('plus', 'var(--brown5)', 38)}Mời bạn bè</div>`;
       const isMe = p[0] === 'me'; const [k, n, host] = isMe ? [p[1], p[2], p[3]] : p; const rd = isMe ? ready.me : ready[n];
-      return `<div class="row" ${isMe ? '' : `data-player="${n}" data-k="${k}" data-team="${team ? 'Xanh' : 'Đỏ'}"`} style="width:368px;height:136px;padding:10px 14px 10px 10px;gap:14px;border-radius:22px;cursor:pointer;background:var(--cream2);border:${rd ? 5 : 4}px solid ${rd ? (team ? 'var(--lgreen)' : 'var(--lred)') : 'var(--brown)'}">
+      return `<div class="row" ${isMe ? '' : `data-player="${n}" data-k="${k}"`} style="width:388px;height:136px;padding:10px 14px 10px 10px;gap:14px;border-radius:22px;cursor:pointer;background:var(--cream2);border:${rd ? 5 : 4}px solid ${rd ? 'var(--green5)' : 'var(--brown)'}">
         <div style="width:112px;height:112px;border-radius:18px;border:3px solid var(--brown);background:var(--or3) url(${charImg(k)}) center/contain no-repeat;flex:none"></div>
         <div class="col" style="gap:6px;min-width:0"><div class="row" style="gap:8px;min-width:0"><b style="font-weight:800;font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</b>${isMe ? '<span class="tag blue" style="font-size:14px;flex:none">BẠN</span>' : ''}</div><span class="tag ${rd ? 'green' : 'cream'}" style="font-size:16px;align-self:flex-start">${rd ? '✓ Sẵn sàng' : 'Đang chọn đồ…'}</span>
           ${host ? '<span class="tag gold" style="font-size:14px;align-self:flex-start">👑 CHỦ PHÒNG</span>' : ''}</div></div>`; };
-    const red = [...redPool.slice(0, nR), ...Array(mT - nR).fill(null)], green = [...bluePool.slice(0, nB), ...Array(kT - nB).fill(null)];
+    const seats = [...pool.slice(0, F), ...Array(N - F).fill(null)];
     return `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn('RỜI PHÒNG', 'left', 'data-leave')}</div>${banner('PHÒNG CHỜ', 'red', (r.host ? 'Phòng của bạn' : r.name) + ' · Mã ' + r.code)}
     <div class="abs pill" style="right:110px;top:70px;padding:10px 24px 12px 18px">${ic('map', 'var(--brown)', 30)}<span style="font-weight:800;font-size:22px">${MAPS[r.map][0]} · ${F}/${N} người · ${r.time ? r.time + ' phút' : 'Random'}</span></div>
-    ${[['ĐỎ', 'var(--lred)', red, 0, 110], ['XANH', 'var(--lgreen)', green, 1, 990]].map(([t, c, list, ti, x]) => `<div class="abs panel" style="left:${x}px;top:232px;width:820px;height:590px;padding:22px 26px 26px">
-      <div class="row" style="gap:14px;margin-bottom:18px"><span class="tag" style="background:${c};color:#fff;font-size:30px;font-weight:900;padding:6px 22px 8px;border-width:4px">ĐỘI ${t}</span><b style="font-weight:800;font-size:26px;color:var(--brown5)">${list.filter(Boolean).length}/${list.length}</b></div>
-      <div style="display:grid;grid-template-columns:368px 368px;gap:16px">${list.map(p => card(p, ti)).join('')}</div></div>`).join('')}
+    <div class="abs panel" style="left:110px;top:${N > 8 ? 232 : 262}px;width:1700px;padding:22px 26px 28px">
+      <div class="row" style="gap:14px;margin-bottom:18px"><span class="tag" style="background:var(--brown);color:#fff;font-size:30px;font-weight:900;padding:6px 22px 8px;border-width:4px">MẬT VỤ TRONG PHÒNG</span><b style="font-weight:800;font-size:26px;color:var(--brown5)">${F}/${N}</b>
+        <span class="tag gold" style="margin-left:auto;font-size:21px;padding:6px 18px 8px">🤫 Hai đội sẽ được chia BÍ MẬT khi trận bắt đầu – dùng ám hiệu để nhận ra đồng đội!</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,388px);gap:16px">${seats.map(p => card(p)).join('')}</div></div>
     <div class="abs row" style="left:0;right:0;top:880px;justify-content:center;gap:22px">${btn('ĐỔI NHÂN VẬT', { color: 'white', size: 'm', icon: 'refresh', attrs: 'data-go="character"' })}${btn('CHAT', { color: 'yellow', size: 'm', icon: 'message', attrs: 'data-chat' })}${btn('MỜI', { color: 'blue', size: 'm', icon: 'plus', attrs: 'data-invite' })}
       ${btn(ready.me ? 'ĐÃ SẴN SÀNG' : 'SẴN SÀNG?', { color: ready.me ? 'lgreen' : 'yellow', size: 'm', icon: ready.me ? 'check' : 'clock', attrs: 'data-ready' })}
       ${r.host ? btn('BẮT ĐẦU', { size: 'm', icon: 'play', attrs: 'data-start' }) : btn(ready.me ? 'ĐANG CHỜ CHỦ PHÒNG…' : 'CHỜ CHỦ PHÒNG', { color: 'white', size: 'm', icon: 'clock', attrs: 'data-wait' })}</div>`; },
   mount(el) { wireCommon(el); clearTimeout(WAIT_T);
     WAIT_T = setTimeout(function tick() { if (cur !== 'waiting') return; const k = ['Khỉ lém', 'Cún nhà', 'Heo ủn', 'Chuột chít'].find(n => !WAIT_READY[n]); if (k) { WAIT_READY[k] = true; go('waiting', {}, { push: false }); } }, 2200);
-    on(el, '[data-leave]', () => confirmBox({ title: 'RỜI PHÒNG?', text: 'Bạn có chắc muốn rời phòng?\nĐội Đỏ sẽ thiếu một mật vụ đó!', no: 'Ở LẠI', yes: 'RỜI PHÒNG', onYes: () => { WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true, 'Ngựa ô': true, 'Gà gáy': true, 'Trâu vàng': true, 'Rắn lục': true }; go('lobby'); } }));
-    on(el, '[data-player]', (e, d) => playerCard({ k: d.dataset.k, n: d.dataset.player, status: 'Trong phòng chờ · Đội ' + d.dataset.team }));
+    on(el, '[data-leave]', () => confirmBox({ title: 'RỜI PHÒNG?', text: 'Bạn có chắc muốn rời phòng?\nPhòng sẽ thiếu một mật vụ đó!', no: 'Ở LẠI', yes: 'RỜI PHÒNG', onYes: () => { WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true, 'Ngựa ô': true, 'Gà gáy': true, 'Trâu vàng': true, 'Rắn lục': true }; go('lobby'); } }));
+    on(el, '[data-player]', (e, d) => playerCard({ k: d.dataset.k, n: d.dataset.player, status: 'Trong phòng chờ' }));
     on(el, '[data-ready]', () => { WAIT_READY.me = !WAIT_READY.me; go('waiting', {}, { push: false }); if (!ROOM.host && WAIT_READY.me) setTimeout(() => { if (cur === 'waiting' && WAIT_READY.me) { toast('Chủ phòng đã bắt đầu trận!', 'info', 'play'); setTimeout(() => cur === 'waiting' && go('countdown'), 900); } }, 2500); });
     on(el, '[data-wait]', () => toast(WAIT_READY.me ? 'Chủ phòng sắp bắt đầu…' : 'Bấm SẴN SÀNG để báo chủ phòng nhé!', 'info', 'clock'));
     on(el, '[data-start]', () => { if (!WAIT_READY.me) return toast('Bấm SẴN SÀNG trước đã nhé!', 'bad'); go('countdown'); });
@@ -109,9 +108,12 @@ let WAIT_READY = { 'Rồng vàng': true, 'Hổ con': true, 'Mèo mướp': true,
 
 SCREENS.countdown = {
   html: () => `<div class="abs" style="inset:0;background:url(${IMG('bg_kitchen.jpg')}) center/cover"></div><div class="abs" style="inset:0;background:rgba(31,10,5,.5)"></div>
-    <div id="cd" class="abs center" style="inset:0"></div><div id="cds" class="abs" style="left:0;right:0;top:900px;text-align:center;font-weight:800;font-size:40px;color:var(--cream)">Chuẩn bị... đi lụm số nào!</div>`,
+    <div id="cd" class="abs center" style="inset:0"></div><div id="cds" class="abs" style="left:0;right:0;top:900px;text-align:center;font-weight:800;font-size:40px;color:var(--cream)">Đang chia đội bí mật…</div>`,
   mount(el) { const cd = el.querySelector('#cd'); let n = 3;
     const step = () => { if (cur !== 'countdown') return; if (n > 0) { cd.innerHTML = `<div style="transform:scale(3.4)"><div class="ball ${n === 2 ? 'g' : ''}" style="animation:spinIn .45s cubic-bezier(.2,1.5,.4,1)">${n}</div></div>`; burst(960, 540, { n: 12, dist: 300, size: 22 }); beep('call'); n--; setTimeout(step, 850); }
-      else { cd.innerHTML = `<div class="stamp">${jd('BẮT ĐẦU!', { h: 220, sw: 10 })}</div>`; shake(stage, 18); burst(960, 520, { n: 24, dist: 520, size: 26 }); el.querySelector('#cds').textContent = 'Lụm đủ 5 số trên vé để KINH!'; beep('win'); setTimeout(() => cur === 'countdown' && go('game', {}, { push: false }), 900); } };
+      else { const M = makeMatch(), t = M.myTeam, T = M.T[t]; el.querySelector('#cds').textContent = '';
+        cd.innerHTML = `<div class="reveal stamp"><span class="rv-k">🤫 ĐỘI ĐƯỢC CHIA BÍ MẬT</span>${jd('BẠN THUỘC ' + TEAM_NAME[t].toUpperCase(), { h: 150, fill: TEAM_C[t], sw: 9 })}
+          <div class="rv-row"><b>Ám hiệu của đội:</b> ${T.action.label}</div><div class="rv-row">Đoán 5 số của đội qua <b>gợi ý trên vé</b>, làm nhiệm vụ để nhận số rồi cất vào <b>KHO ${TEAM_NAME[t].toUpperCase()}</b>. Đừng để lộ đội của mình!</div></div>`;
+        shake(stage, 18); burst(960, 520, { n: 24, dist: 520, size: 26 }); beep('win'); setTimeout(() => cur === 'countdown' && go('game', {}, { push: false }), 3600); } };
     step(); }
 };
