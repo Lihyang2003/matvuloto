@@ -227,7 +227,8 @@ function bgOnb() { let seeds = ''; const kinds = [['22px','40px','var(--red)'],[
   for (let x = 120; x <= 1820; x += 112) { put(x, 54, 0); } for (let y = 150; y <= 960; y += 112) put(1866, y + 56, 90);
   for (let x = 1820; x >= 120; x -= 112) put(x - 56, 1026, 0); for (let y = 960; y >= 150; y -= 112) put(54, y, 90);
   return `<div class="bg-onb"><div class="band"></div><div class="dash"></div>${seeds}<div class="panel-o">${fadedBalls(34, 7, .55)}</div><div class="panel-b"></div></div>`; }
-const logo = (scale = 1) => `<div class="col" style="align-items:center">${jd('MẬT VỤ', { h: 130 * scale, sw: 7 })}<div style="margin-top:${-55 * scale}px">${jd('LÔ TÔ', { h: 200 * scale, fill: 'var(--red)', sw: 8 })}</div></div>`;
+// Official logo (Figma AI, background removed) – 1165x887 source, scale 1 = 500px tall
+const logo = (scale = 1) => `<img class="logo" src="${IMG('logo.webp')}" alt="Mật Vụ Lô Tô" draggable="false" style="height:${Math.round(500 * scale)}px;width:auto;display:block;filter:drop-shadow(0 ${Math.round(10 * scale)}px 0 rgba(90,28,19,.22))">`;
 function on(root, sel, fn) { root.querySelectorAll(sel).forEach(el => { if (!el._on) { el._on = new Map(); el.addEventListener('click', e => { if (!el._on.size) return; beep(); [...el._on.values()].forEach(f => f(e, el)); }); } el._on.set(sel, fn); }); }
 function wireCommon(root) { on(root, '[data-back]', () => back()); on(root, '[data-go]', (e, el) => go(el.dataset.go)); }
 function confetti(root, n = 60) { const cols = ['#D63B2F', '#F7C531', '#2FA24A', '#3A5797', '#F4B550']; for (let i = 0; i < n; i++) { const c = document.createElement('div'); c.className = 'confetti';

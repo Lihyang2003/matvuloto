@@ -11,9 +11,9 @@ SCREENS.splash = {
 };
 
 SCREENS.onboard = {
-  html: () => `${bgOnb()}<div class="abs center wiggle-slow" style="left:0;right:0;top:40px">${logo(.85)}</div>
-    ${ball(27, 'abs').replace('class="ball abs', 'style="left:600px;top:250px;transform:rotate(14deg) scale(1.2)" class="ball abs')}
-    ${ball(86, 'abs').replace('class="ball abs', 'style="left:1210px;top:210px;transform:rotate(-12deg) scale(1.2)" class="ball abs')}
+  html: () => `${bgOnb()}<div class="abs center wiggle-slow" style="left:0;right:0;top:72px">${logo(.82)}</div>
+    ${ball(27, 'abs').replace('class="ball abs', 'style="left:430px;top:250px;transform:rotate(14deg) scale(1.2)" class="ball abs')}
+    ${ball(86, 'abs').replace('class="ball abs', 'style="left:1370px;top:200px;transform:rotate(-12deg) scale(1.2)" class="ball abs')}
     <div class="abs col" style="left:580px;top:512px;width:760px;gap:34px">
       ${btn('Đăng nhập', { icon: 'log-in', attrs: 'data-go="login"' })}${btn('Đăng ký', { color: 'blue', icon: 'user-plus', attrs: 'data-go="register"' })}${btn('Chế độ khách', { color: 'yellow', icon: 'ticket', attrs: 'data-guest' })}</div>`,
   mount(el) { wireCommon(el); on(el, '[data-guest]', () => { S.logged = true; S.guest = true; S.name = 'Khách ' + (1000 + Math.floor(Math.random() * 9000)); save(); go('lobby'); }); }

@@ -27,7 +27,7 @@
 <script src="js/game.js"></script>
 <script>
   // preload images, then start
-  const pre = ['assets/img/world.jpg','assets/img/world_small.jpg','assets/img/bg_kitchen.jpg','assets/img/pouch.webp','assets/img/coin.webp','assets/img/li_xi.webp', ...CHARS.map(c => charImg(c[0]))];
+  const pre = ['assets/img/logo.webp','assets/img/world.jpg','assets/img/world_small.jpg','assets/img/bg_kitchen.jpg','assets/img/pouch.webp','assets/img/coin.webp','assets/img/li_xi.webp', ...CHARS.map(c => charImg(c[0]))];
   window.PRE = { n: 0, total: pre.length };
   pre.forEach(src => { const i = new Image(); i.onload = i.onerror = () => PRE.n++; i.src = src; });
   const start = (location.hash || '').slice(1);
