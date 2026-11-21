@@ -66,7 +66,7 @@ function charOn(k, cx, cy, h, opts = {}) { return (window.RIG && RIG[k]) ? rigHT
 /* skeletal rig: 6 layers cut from the Illustrator vectors, each rotating around its own joint */
 function rigLayers(k) { const R = RIG[k]; return R.order.map(n => { const p = R.parts[n]; return `<img class="rp rp-${n}" data-part="${n}" src="assets/rig/${k}_${n}.webp" draggable="false" style="transform-origin:${(p.pivot[0] / R.w * 100).toFixed(2)}% ${(p.pivot[1] / R.h * 100).toFixed(2)}%">`; }).join(''); }
 function rigHTML(k, cx, cy, h, { cls = '', style = '', shadow = true, idle = true } = {}) { const R = RIG[k], s = h / R.h, w = R.w * s, [ax, ay] = R.anchor, sw = (R.shadowW || R.w * .6) * s;
-  return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw / 2).toFixed(1)}px;top:${(cy - h * .035).toFixed(1)}px;width:${sw.toFixed(1)}px;height:${(h * .07).toFixed(1)}px"></div>` : ''}<div class="abs rig${idle ? ' idle' : ''} ${cls}" data-rig="${k}" style="left:${(cx - ax * s).toFixed(1)}px;top:${(cy - ay * s).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * s).toFixed(1)}px ${(ay * s).toFixed(1)}px;--d:${(Math.random() * -3).toFixed(2)}s;${style}">${rigLayers(k)}</div>`; }
+  return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw / 2).toFixed(1)}px;top:${(cy - h * .035).toFixed(1)}px;width:${sw.toFixed(1)}px;height:${(h * .07).toFixed(1)}px"></div>` : ''}<div class="abs rig${idle ? ' idle' : ''} ${cls}" data-rig="${k}" style="left:${(cx - ax * s).toFixed(1)}px;top:${(cy - ay * s).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * s).toFixed(1)}px ${(ay * s).toFixed(1)}px;--d:${(-((k.charCodeAt(0) * 7 + k.length * 13) % 30) / 10).toFixed(2)}s;${style}">${rigLayers(k)}</div>`; }
 function charFlat(k, cx, cy, h, { cls = '', style = '', shadow = true } = {}) { const [ax, ay, sw, asp] = (window.ANCHOR || {})[k] || [.5, .93, .7, 1]; const w = h * asp;
   return `${shadow ? `<div class="abs cshadow" style="left:${(cx - sw * w / 2).toFixed(1)}px;top:${(cy - h * .04).toFixed(1)}px;width:${(sw * w).toFixed(1)}px;height:${(h * .08).toFixed(1)}px"></div>` : ''}<img src="${charNS(k)}" class="abs ${cls}" style="left:${(cx - ax * w).toFixed(1)}px;top:${(cy - ay * h).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h}px;transform-origin:${(ax * 100).toFixed(1)}% ${(ay * 100).toFixed(1)}%;${style}">`; }
 /* podium centred on cx, top edge at y; returns html; top-surface centre is y + 50*scale */
@@ -142,9 +142,25 @@ stage.addEventListener('pointerdown', e => { lastPt = toStage(e.clientX, e.clien
 function build(name, params, enter) { const el = document.createElement('div'); el.className = 'screen' + (enter ? ' enter' : ''); el.dataset.screen = name; el.innerHTML = SCREENS[name].html(params);
   if (enter) el.querySelectorAll('.panel,.navbtn,.pill,.iconbtn,.btn,.calledboard,.ticket,.hudbtn,.minimap,.joy').forEach((n, i) => n.style.animationDelay = (.08 + Math.min(i, 14) * .045) + 's');
   return el; }
+/* Patch the live screen to match a fresh render: only changed attributes/text/nodes are touched, so images don't reload,
+   idle animations keep running, scroll + focus survive -> a selection change no longer "flashes" like a screen change. */
+const NO_MORPH = new Set(['game', 'countdown', 'result', 'summary', 'splash']);
+function morph(a, b) {
+  if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
+  if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) { a.nodeValue = b.nodeValue; const p = a.parentElement; if (p && !REDUCED && a.nodeValue.trim()) { p.classList.remove('tick'); void p.offsetWidth; p.classList.add('tick'); } } return; }
+  for (let i = a.attributes.length - 1; i >= 0; i--) { const n = a.attributes[i].name; if (!b.hasAttribute(n)) a.removeAttribute(n); }
+  for (const { name, value } of b.attributes) if (a.getAttribute(name) !== value) { a.setAttribute(name, value); if (name === 'src' && a.tagName === 'IMG' && !REDUCED) a.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 240, easing: 'ease-out' }); }
+  if (a.tagName === 'INPUT' && a !== document.activeElement && a.value !== b.value) a.value = b.value;
+  const ac = [...a.childNodes], bc = [...b.childNodes];
+  bc.forEach((n, i) => i < ac.length ? morph(ac[i], n) : a.appendChild(n));
+  for (let i = bc.length; i < ac.length; i++) ac[i].remove();
+}
 function go(name, params = {}, { push = true, fx = true } = {}) {
   if (name === cur && !push) { // in-place re-render: keep overlays (reward popups) alive
-    SCREENS[cur].leave?.(); curParams = params; const old = stage.querySelector('.screen'); const el = build(name, params, false); old ? old.replaceWith(el) : stage.prepend(el); SCREENS[name].mount?.(el, params); return; }
+    SCREENS[cur].leave?.(); curParams = params; const old = stage.querySelector('.screen'); const el = build(name, params, false);
+    if (old && !NO_MORPH.has(name)) { old.querySelectorAll('*').forEach(n => n._on && n._on.clear()); morph(old, el); SCREENS[name].mount?.(old, params); }
+    else { old ? old.replaceWith(el) : stage.prepend(el); SCREENS[name].mount?.(el, params); }
+    return; }
   closeAllOverlays(); if (cur) SCREENS[cur].leave?.(); if (push && cur) hist.push([cur, curParams]); if (name === 'lobby') hist.length = 0;
   const prev = cur; cur = name; curParams = params;
   const swap = () => { const el = build(name, params, true); stage.querySelector('.screen')?.remove(); stage.prepend(el); SCREENS[name].mount?.(el, params); try { history.replaceState(null, '', '#' + name); } catch {} };
@@ -212,7 +228,7 @@ function bgOnb() { let seeds = ''; const kinds = [['22px','40px','var(--red)'],[
   for (let x = 1820; x >= 120; x -= 112) put(x - 56, 1026, 0); for (let y = 960; y >= 150; y -= 112) put(54, y, 90);
   return `<div class="bg-onb"><div class="band"></div><div class="dash"></div>${seeds}<div class="panel-o">${fadedBalls(34, 7, .55)}</div><div class="panel-b"></div></div>`; }
 const logo = (scale = 1) => `<div class="col" style="align-items:center">${jd('MẬT VỤ', { h: 130 * scale, sw: 7 })}<div style="margin-top:${-55 * scale}px">${jd('LÔ TÔ', { h: 200 * scale, fill: 'var(--red)', sw: 8 })}</div></div>`;
-function on(root, sel, fn) { root.querySelectorAll(sel).forEach(el => el.addEventListener('click', e => { beep(); fn(e, el); })); }
+function on(root, sel, fn) { root.querySelectorAll(sel).forEach(el => { if (!el._on) { el._on = new Map(); el.addEventListener('click', e => { if (!el._on.size) return; beep(); [...el._on.values()].forEach(f => f(e, el)); }); } el._on.set(sel, fn); }); }
 function wireCommon(root) { on(root, '[data-back]', () => back()); on(root, '[data-go]', (e, el) => go(el.dataset.go)); }
 function confetti(root, n = 60) { const cols = ['#D63B2F', '#F7C531', '#2FA24A', '#3A5797', '#F4B550']; for (let i = 0; i < n; i++) { const c = document.createElement('div'); c.className = 'confetti';
   c.style.cssText = `left:${Math.random() * 1920}px;top:${-40 - Math.random() * 400}px;background:${cols[i % 5]};animation-duration:${2.5 + Math.random() * 2.5}s;animation-delay:${Math.random()}s;transform:rotate(${Math.random() * 180}deg)`; root.appendChild(c); } }

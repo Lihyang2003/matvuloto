@@ -159,3 +159,10 @@ body.portrait #rotate{display:flex}
 @keyframes rFootL{0%,80%,100%{rotate:0}88%{rotate:-8deg;translate:0 -6px}}
 .rig.idle:hover .rp-arm,.rig.wave .rp-arm{animation:rArm .45s ease-in-out infinite}
 .rig.wave{animation:hop .7s cubic-bezier(.3,0,.4,1) 2}
+
+/* ---------- smooth in-place updates (selection changes) ---------- */
+.screen :is(.chip,.subcard,.tag,.iconbtn,[data-map],[data-priv],[data-time],[data-char],[data-item],[data-f],.seg span){transition:background-color .22s ease,color .22s ease,border-color .22s ease,outline-color .22s ease,box-shadow .22s ease,opacity .22s ease}
+.screen [data-map] img{transition:opacity .22s ease}
+.tick{animation:tick .32s cubic-bezier(.2,1.6,.4,1)}
+@keyframes tick{0%{scale:1.22}100%{scale:1}}
+@media (prefers-reduced-motion:reduce){.tick{animation:none}}
