@@ -113,7 +113,7 @@ function openDaily() {
 SCREENS.character = {
   html: () => { const sel = S.char; const c = CHARS.find(x => x[0] === sel); const idx = CHARS.indexOf(c);
     return `${bgGame()}<div class="abs" style="left:110px;top:60px">${navbtn()}</div>${banner('NHÂN VẬT', 'blue')}<div class="abs" style="right:110px;top:60px">${navbtn('SHOP', 'right', 'data-go="shop"')}</div>
-    <div class="abs panel" style="left:110px;top:232px;width:780px;padding:22px 30px 30px">
+    <div class="abs panel" style="left:110px;top:232px;width:780px;padding:22px 26px 30px">
       <div class="sec-head" style="margin-bottom:22px"><div class="numbadge g">01</div>CHỌN NHÂN VẬT<span class="tag or">Đã mở 12/12</span></div>
       <div class="grid-cards" style="grid-template-columns:repeat(3,220px)">${CHARS.map(([k, n]) => `<div data-char="${k}" style="position:relative;height:140px;border-radius:20px;background:var(--brown);padding:7px;cursor:pointer;${k === sel ? 'outline:5px solid var(--red);outline-offset:2px' : ''}">
         <div style="position:relative;height:100%;border-radius:14px;background:${k === sel ? 'var(--or5)' : 'var(--cream)'} url(${charImg(k)}) right 6px top 6px/118px no-repeat"><span class="tag ${k === sel ? '' : 'cream'}" style="position:absolute;left:10px;top:10px;font-size:22px;${k === sel ? 'background:var(--brown);color:var(--cream)' : ''}">${n}</span></div></div>`).join('')}</div></div>
@@ -123,7 +123,7 @@ SCREENS.character = {
       ${S.wearing && S.wearing !== 'ao' ? `<img src="${IMG(ITEMS[S.wearing][1])}" class="abs" style="left:${S.wearing === 'kinh' ? 150 : S.wearing === 'nonla' ? 110 : 140}px;top:${S.wearing === 'kinh' ? 100 : S.wearing === 'nonla' ? -10 : 170}px;width:${S.wearing === 'nonla' ? 200 : 130}px">` : ''}
       <div class="abs col" style="left:400px;top:70px;width:340px;gap:14px"><span class="tag blue" style="align-self:flex-start">Con giáp #${idx + 1}</span><div style="font-weight:900;font-size:84px;line-height:1">${c[1].toUpperCase()}</div>
         <div style="font-weight:600;font-size:26px">${c[2]}</div><div class="row" style="gap:10px"><span class="tag cream" style="font-size:18px">Tốc độ ★★★</span><span class="tag cream" style="font-size:18px">May mắn ★★</span></div></div></div></div>
-    <div class="abs panel" style="left:1000px;top:706px;width:810px;padding:18px 26px 24px"><div class="sec-head" style="margin-bottom:14px"><div class="numbadge b" style="transform:scale(.8)">02</div>TRANG PHỤC</div>
+    <div class="abs panel" style="left:1000px;top:706px;width:810px;padding:22px 26px 24px"><div class="sec-head" style="margin-bottom:14px"><div class="numbadge b">02</div>TRANG PHỤC</div>
       <div class="row" style="gap:14px">${Object.entries(ITEMS).map(([k, [n, im]]) => { const own = S.owned.includes(k), w = S.wearing === k;
         return `<div data-item="${k}" class="row" style="flex:1;gap:4px;padding:6px 8px;border-radius:18px;cursor:pointer;background:${w ? 'var(--or5)' : 'var(--cream2)'};border:${w ? '5px solid var(--red)' : '4px solid var(--brown)'};${own ? '' : 'opacity:.6'}"><img src="${IMG(im)}" width="44" height="44"><b style="font-weight:800;font-size:16px;white-space:nowrap">${own ? '' : '🔒 '}${n}</b></div>`; }).join('')}</div></div>
     <div class="abs" style="left:1105px;top:946px">${btn('XÁC NHẬN', { color: 'green', icon: 'check', attrs: 'data-ok', style: 'width:600px' })}</div>`; },
