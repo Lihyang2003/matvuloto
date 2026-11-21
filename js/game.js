@@ -348,13 +348,12 @@ function endGame(winTeam) { if (G.done) return; G.done = true; G.running = false
 
 /* ---------- popups ---------- */
 function openTicket() { if (ovRoot.children.length || G.done) return; const T = G.T[G.myTeam], seen = G.seen[G.myTeam];
-  const cell = n => n ? `<div>${jd(String(n), { h: 50, fill: 'var(--textd)', sw: 0, shadow: false })}${seen.includes(n) ? '<i class="stamp-o"></i>' : ''}</div>` : '<div class="r"></div>';
-  const o = overlay({ title: '', close: false, width: 900, cls: 'ticketov', body: `<div class="lticket"><div class="orn t">${'✚'.repeat(44)}</div><div class="orn b">${'✚'.repeat(44)}</div><div class="lt-x" data-x>${ic('x', '#fff', 44)}</div>
-    <div class="lt-team" style="background:${TEAM_C[G.myTeam]}">VÉ CỦA ${TEAM_NAME[G.myTeam].toUpperCase()} · BÍ MẬT</div>
-    <div class="lt-grid">${T.card.slice(0, 3).flat().map(cell).join('')}</div><div class="lt-grid">${T.card.slice(3).flat().map(cell).join('')}</div>
-    <div class="lt-hint"><div class="row" style="gap:14px;align-items:flex-start">${jd('HINT SỐ:', { h: 40, fill: 'var(--or5)', stroke: 'var(--brown)', sw: 3 })}<div class="col" style="gap:4px">${T.hint.map(h => jd(h, { h: 40, fill: 'var(--or5)', stroke: 'var(--brown)', sw: 3 })).join('')}</div></div>
-      <div class="row" style="gap:14px">${jd('HINT ĐỘI:', { h: 40, fill: 'var(--or5)', stroke: 'var(--brown)', sw: 3 })}${jd(T.action.label, { h: 40, fill: 'var(--or5)', stroke: 'var(--brown)', sw: 3 })}</div>
-      <span class="lt-note">Dãy số của đội nằm lẫn trong vé – đoán qua gợi ý. Số đã tìm được sẽ được khoanh đỏ · đã cất kho ${G.kho[G.myTeam].size}/5</span></div></div>` });
+  const cell = n => n ? `<div>${jd(String(n), { h: 72, fill: '#2A1C1C', sw: 0, shadow: false })}${seen.includes(n) ? '<i class="stamp-o"></i>' : ''}</div>` : '<div class="r"></div>';
+  const J = (t, lab) => jd(t, { h: 48, fill: lab ? '#F88400' : '#F8AC48', stroke: '#A65A1A', sw: 2.5, shadow: false });
+  const o = overlay({ title: '', close: false, width: 792, cls: 'ticketov', body: `<div class="lticket2"><img class="ltf" src="${IMG('ticket_frame.svg')}" alt="" draggable="false"><div class="lt-x" data-x>${ic('x', '#fff', 44)}</div>
+    <div class="lt-grid2" style="top:88px">${T.card.slice(0, 3).flat().map(cell).join('')}</div><div class="lt-grid2" style="top:371px">${T.card.slice(3).flat().map(cell).join('')}</div>
+    <div class="lt-hint2"><div class="hw"><div class="hr">${J('HINT SỐ:', 1)}<div class="hc">${T.hint.map(h => J(h)).join('')}</div></div><div class="hr">${J('HINT ĐỘI:', 1)}${J(T.action.label)}</div></div></div></div>` });
+  const hb = o.querySelector('.lt-hint2'), hw = hb.querySelector('.hw'), need = hw.scrollWidth, room = hb.clientWidth - 60; if (need > room) hw.style.zoom = (room / need).toFixed(3);  // long riddles shrink to fit
   on(o, '[data-x]', () => o.close()); }
 function showReward(n) { const own = G.N[n].team === G.myTeam, opp = G.knownOpp.has(n);
   const o = overlay({ title: 'NHẬN ĐƯỢC SỐ!', color: own ? 'red' : 'blue', width: 920, cls: 'reward', body: `<div class="rw-stage" style="height:240px"><div class="rays"></div><div class="glow"></div>${'<i class="tw"></i>'.repeat(own ? 6 : 0)}<div style="transform:scale(1.7)">${ball(n)}</div></div>
