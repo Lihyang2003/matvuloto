@@ -124,11 +124,42 @@ function endGame(win, why) { if (G.done) return; G.done = true; G.running = fals
   setTimeout(() => go('result', { win, got: G.got.length, extras: G.extras.length, jumps: G.jumps }, { push: false }), 900); }
 
 /* ---- popups in game ---- */
-function openBag() { if (ovRoot.children.length) return; overlay({ title: '', width: 980, body: `<div style="position:absolute;left:0;top:0;right:0;bottom:0;border-radius:30px;background:linear-gradient(#E5543A,#B8331F);z-index:-1"></div>
-  <img src="${IMG('pouch.webp')}" style="position:absolute;left:50%;top:-110px;transform:translateX(-50%);width:190px;border-radius:50%;border:6px solid var(--brown)">${jd('TÚI CỦA BẠN', { h: 84, sw: 6 })}
-  <b style="font-weight:700;font-size:28px;color:var(--cream)">Vé ${G.got.length}/5 · thêm ${G.extras.length} số ngoài vé</b>
-  <div class="row" style="gap:28px;padding:28px 40px;border-radius:30px;background:var(--cream);border:6px solid var(--gold);flex-wrap:wrap;justify-content:center;max-width:880px">${G.ticket.map(n => G.got.includes(n) ? ball(n) : `<div class="ball empty">?</div>`).join('')}</div>
-  ${G.extras.length ? `<div class="row" style="gap:12px;flex-wrap:wrap;justify-content:center">${G.extras.slice(-8).map(n => ball(n, 'xs')).join('')}</div>` : ''}<b style="font-weight:700;font-size:22px;color:var(--cream);opacity:.85">Chạm ra ngoài để đóng túi</b>`, close: false }); }
+// Bag: the HUD pouch flies to the centre and opens (brief art), the numbers you picked drop inside
+function bagPile(list) { // [{n, tk}] -> centres inside the pouch mouth (pouch box 760x711); ticket numbers go in the front row
+  const n = list.length, s = n <= 3 ? 150 : n <= 6 ? 128 : 112, caps = n <= 3 ? [3] : n <= 6 ? [3, 3] : [4, 3, 2], gap = s * .84, out = []; let i = 0;
+  caps.forEach((cap, row) => { const k = Math.min(cap, n - i);
+    for (let j = 0; j < k; j++, i++) out.push({ ...list[i], s, row, x: 386 + (j - (k - 1) / 2) * gap + (row % 2 ? s * .14 : 0), y: 440 - s / 2 - row * s * .6, r: (list[i].n * 37) % 31 - 15 }); });
+  return out.sort((p, q) => q.row - p.row); } // back rows first so the front row draws on top
+function openBag() { const open = ovRoot.querySelector('.ov.bag'); if (open) return open.close(); if (ovRoot.children.length) return;
+  const all = [...G.got.map(n => ({ n, tk: true })), ...G.extras.slice().reverse().map(n => ({ n, tk: false }))], pile = bagPile(all.slice(0, 9)), more = all.length - pile.length;
+  const hb = G.el.querySelector('[data-bag]'), icon = hb && hb.querySelector('img'), hr = hb ? rectOf(hb) : { cx: 1795, cy: 731 };
+  const PX = 580, PY = 262, PW = 760, PH = 711, dx = hr.cx - (PX + PW / 2), dy = hr.cy - (PY + PH * .6), FROM = `translate(${dx}px,${dy}px) scale(.24) rotate(-10deg)`;
+  const o = document.createElement('div'); o.className = 'ov bag'; beep('pop');
+  o.innerHTML = `<div class="dim"></div>
+    <div class="bag-head"><b>VÉ CỦA BẠN</b>${G.ticket.map(n => G.got.includes(n) ? ball(n, 'xs') : '<div class="ball xs empty">?</div>').join('')}<span>${G.got.length}/5${G.extras.length ? ` · +${G.extras.length} số ngoài vé` : ''}</span></div>
+    <div class="bag-pouch" style="left:${PX}px;top:${PY}px;width:${PW}px;height:${PH}px"><img src="${IMG('pouch_open.webp')}" draggable="false" alt="Túi lô tô">
+      ${pile.length ? '' : '<div class="bag-empty">Túi còn trống!<small>Đứng lên quả lô tô rồi bấm LỤM nhé</small></div>'}
+      ${pile.map(p => `<div class="ball ${p.n > 45 ? 'g' : ''} ${p.tk ? 'tk' : ''}" data-r="${p.r}" style="left:${p.x - p.s / 2}px;top:${p.y - p.s / 2}px;width:${p.s}px;height:${p.s}px;border-width:${Math.round(p.s * .083)}px;font-size:${Math.round(p.s * .44)}px;transform:rotate(${p.r}deg)">${p.n}</div>`).join('')}
+      ${more > 0 ? `<span class="tag gold bag-more">+${more} số nữa trong túi</span>` : ''}</div>
+    <div class="bag-hint">${G.got.length ? '<b>★</b> số có trong vé · ' : ''}Chạm bất kỳ đâu để đóng túi</div>`;
+  ovRoot.appendChild(o);
+  const pouch = o.querySelector('.bag-pouch'), balls = [...pouch.querySelectorAll('.ball')], fade = [o.querySelector('.bag-head'), o.querySelector('.bag-hint'), o.querySelector('.bag-more'), o.querySelector('.bag-empty')].filter(Boolean);
+  if (icon) icon.style.opacity = 0;
+  if (!REDUCED) {
+    pouch.animate([{ transform: FROM, opacity: .5 }, { transform: 'translateY(-16px) scale(1.04) rotate(1deg)', opacity: 1, offset: .68 }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,.8,.4,1)' });
+    balls.forEach((b, i) => { const r = +b.dataset.r, d = 360 + i * 75;
+      b.animate([{ transform: `translateY(-320px) rotate(${r - 40}deg)`, opacity: 0 }, { opacity: 1, offset: .25 }, { transform: `translateY(0) rotate(${r}deg)`, offset: .7, easing: 'ease-out' }, { transform: `translateY(-18px) rotate(${r}deg)`, offset: .85, easing: 'ease-in' }, { transform: `translateY(0) rotate(${r}deg)` }],
+        { duration: 560, delay: d, easing: 'ease-in', fill: 'backwards' });
+      if (i < 6) setTimeout(() => o.isConnected && !o.closing && beep('tick'), d + 390); });
+    fade.forEach(f => f.animate([{ opacity: 0, translate: '0 -18px' }, { opacity: 1, translate: '0 0' }], { duration: 280, delay: 260, easing: 'ease-out', fill: 'backwards' }));
+  }
+  o.close = () => { if (o.closing) return; o.closing = true; beep();
+    const done = () => { o.remove(); if (icon) { icon.style.opacity = ''; if (!REDUCED) icon.animate([{ scale: 1.25 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.2,1.6,.4,1)' }); } };
+    if (REDUCED) return done();
+    [...balls, ...fade].forEach(b => b.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: 'forwards' }));
+    o.querySelector('.dim').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 330, fill: 'forwards' });
+    pouch.animate([{ transform: 'none', opacity: 1 }, { transform: FROM, opacity: .35 }], { duration: 300, delay: 60, easing: 'cubic-bezier(.5,0,.75,.4)', fill: 'forwards' }).onfinish = done; };
+  o.onclick = o.close; }
 function openMap() { if (ovRoot.children.length) return; const s = 640 / WORLD.w; overlay({ title: 'BẢN ĐỒ · ' + MAPS[ROOM.map][0].toUpperCase(), width: 760, dimClose: false, body: `<div style="position:relative;width:640px;height:${WORLD.h * s}px;border:5px solid var(--brown);border-radius:14px;overflow:hidden;background:url(${IMG('world_small.jpg')}) 0 0/100% 100%">
   ${G.balls.map(b => `<div style="position:absolute;left:${b.x * s - 13}px;top:${b.y * s - 13}px;width:26px;height:26px;border-radius:50%;background:${b.kind === 'ticket' ? 'var(--gold)' : '#fff'};border:3px solid var(--brown)"></div>`).join('')}
   <div style="position:absolute;left:${G.px * s - 30}px;top:${G.py * s - 30}px;width:60px;height:60px;border-radius:50%;background:rgba(211,63,42,.3)"></div><div style="position:absolute;left:${G.px * s - 14}px;top:${G.py * s - 14}px;width:28px;height:28px;border-radius:50%;background:var(--red);border:4px solid #fff"></div>

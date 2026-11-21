@@ -192,3 +192,20 @@ input{font-family:inherit}
 .scroll{overflow-y:auto;scrollbar-width:thin}
 .spark{position:absolute;color:var(--gold);font-weight:900;font-size:34px;pointer-events:none;animation:floatUp 1s forwards;text-shadow:0 3px 0 var(--brown)}
 @keyframes floatUp{to{transform:translateY(-90px);opacity:0}}
+
+/* in-game bag: open pouch with the picked numbers inside */
+.ov.bag{cursor:pointer}
+.ov.bag .dim{background:rgba(31,10,5,.62)}
+.bag-pouch{position:absolute;transform-origin:50% 60%}
+.bag-pouch > img{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 16px 0 rgba(31,10,5,.35));user-select:none}
+.bag-pouch .ball{position:absolute;box-shadow:0 7px 0 rgba(90,28,19,.4)}
+.bag-pouch .ball.tk{box-shadow:0 0 0 6px var(--gold),0 9px 0 rgba(90,28,19,.4)}
+.bag-pouch .ball.tk::before{content:'★';position:absolute;right:-10px;top:-14px;font:900 34px/1 system-ui,sans-serif;color:var(--gold);-webkit-text-stroke:2px var(--brown)}
+.bag-empty{position:absolute;left:150px;right:150px;top:270px;text-align:center;font-weight:900;font-size:42px;line-height:1.15;color:var(--cream);text-shadow:0 3px 0 rgba(90,28,19,.55)}
+.bag-empty small{display:block;margin-top:10px;font-weight:700;font-size:23px;opacity:.92}
+.bag-more{position:absolute;left:50%;top:600px;transform:translateX(-50%);font-size:24px;white-space:nowrap}
+.bag-head{position:absolute;left:50%;top:128px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:10px 26px 10px 28px;border-radius:60px;background:var(--cream);border:5px solid var(--brown);box-shadow:0 7px 0 rgba(31,10,5,.4);white-space:nowrap}
+.bag-head b{font-weight:900;font-size:24px;margin-right:6px}
+.bag-head span{font-weight:800;font-size:22px;color:var(--brown5);margin-left:6px}
+.bag-hint{position:absolute;left:0;right:0;top:1002px;text-align:center;font-weight:700;font-size:23px;color:var(--cream);opacity:.9}
+.bag-hint b{color:var(--gold)}
