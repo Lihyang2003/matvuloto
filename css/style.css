@@ -200,7 +200,7 @@ input{font-family:inherit}
 .bag-pouch > img{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 16px 0 rgba(31,10,5,.35));user-select:none}
 .bag-pouch .ball{position:absolute;box-shadow:0 7px 0 rgba(90,28,19,.4)}
 .bag-pouch .ball.tk{box-shadow:0 0 0 6px var(--gold),0 9px 0 rgba(90,28,19,.4)}
-.bag-pouch .ball.tk::before{content:'★';position:absolute;right:-10px;top:-14px;font:900 34px/1 system-ui,sans-serif;color:var(--gold);-webkit-text-stroke:2px var(--brown)}
+.bag-pouch .ball.tk::before{content:'★';position:absolute;left:50%;top:-30px;transform:translateX(-50%);font:900 34px/1 system-ui,sans-serif;color:var(--gold);-webkit-text-stroke:2px var(--brown)}
 .bag-empty{position:absolute;left:150px;right:150px;top:270px;text-align:center;font-weight:900;font-size:42px;line-height:1.15;color:var(--cream);text-shadow:0 3px 0 rgba(90,28,19,.55)}
 .bag-empty small{display:block;margin-top:10px;font-weight:700;font-size:23px;opacity:.92}
 .bag-more{position:absolute;left:50%;top:600px;transform:translateX(-50%);font-size:24px;white-space:nowrap}
