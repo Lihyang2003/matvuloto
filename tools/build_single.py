@@ -1,7 +1,7 @@
 """Pack the whole web game into ONE offline HTML file (double-click to play, no server / internet needed).
 - CSS + JS inlined, every file under assets/ embedded (turned into blob: URLs at start-up)
 - Google Fonts (Be Vietnam Pro, Russo One) downloaded once and embedded as woff2
-    python tools/build_single.py            -> ../dist/MatVuLoTo.html (+ MatVuLoTo.zip)
+    python tools/build_single.py            -> ../dist/MatVuLoTo.html (+ MatVuLoTo.zip), zip also copied to download/
 """
 import base64, json, mimetypes, pathlib, re, urllib.request, zipfile
 
@@ -71,4 +71,5 @@ readme = ('MẬT VỤ LÔ TÔ – bản chơi offline\n\n'
 (dist / 'HUONG_DAN.txt').write_text(readme, encoding='utf8')
 with zipfile.ZipFile(dist / 'MatVuLoTo.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     z.write(out, 'MatVuLoTo/MatVuLoTo.html'); z.write(dist / 'HUONG_DAN.txt', 'MatVuLoTo/HUONG_DAN.txt')
+dl = root / 'download'; dl.mkdir(exist_ok=True); (dl / 'MatVuLoTo.zip').write_bytes((dist / 'MatVuLoTo.zip').read_bytes())   # published with the site
 print('assets', len(assets), 'fonts', len(font_css), 'html MB', round(out.stat().st_size / 1e6, 2), 'zip MB', round((dist / 'MatVuLoTo.zip').stat().st_size / 1e6, 2), 'leftover refs', left[:5])
