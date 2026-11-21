@@ -78,7 +78,7 @@ SCREENS.lobby = {
     <div class="abs pill" data-go="profile" style="left:60px;top:44px;padding:10px 28px 12px 12px;cursor:pointer"><div style="width:88px;height:88px;border-radius:50%;background:var(--or5) url(${charImg(S.char)}) center/contain no-repeat;border:4px solid var(--brown)"></div>
       <div class="col" style="gap:6px"><span style="font-size:28px;font-weight:800">${S.name}</span><div class="row" style="gap:10px"><span class="tag gold" style="font-size:18px">Lv.${S.level}</span>
       <div style="width:160px;height:16px;border-radius:8px;border:2px solid var(--brown);background:var(--cream2);overflow:hidden"><div style="height:100%;width:${Math.min(100, (S.lvProg || 0) / xpNeed(S.level) * 100)}%;background:var(--green5)"></div></div></div></div></div>
-    <div class="abs center" style="left:0;right:0;top:18px;pointer-events:none">${logo(.43)}</div>
+    <div class="abs wiggle-slow" style="left:540px;top:26px;pointer-events:none">${logo(.64)}</div>
     <div class="abs row" style="right:60px;top:48px;gap:18px">${coinPill('data-go="shopxu" style="cursor:pointer"')}
       <div class="iconbtn" data-go="mail">${ic('mail', 'var(--brown)')}${unreadMails() ? `<span class="dot-badge">${unreadMails()}</span>` : ''}</div>
       <div class="iconbtn" data-help>${ic('help', 'var(--brown)')}</div><div class="iconbtn" data-go="settings">${ic('settings', 'var(--brown)')}</div></div>
